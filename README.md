@@ -32,10 +32,15 @@ make
 
 To execute the program, the following syntax should be used:
 ```bash
-./disassembler <file> # Prints in stdin the disassembled 8086-ASM code of given binary file formatted with address number and both hexadecimal & text representation of the instructions.
+# Prints in stdin the disassembled 8086-ASM code of given binary
+# file formatted with address number and both hexadecimal & text
+# representation of the instructions.
+./disassembler <file> 
 
-# Dumping flag: -d OR --dump 
-./disassembler <-d OR --dump> <file> # Prints in stdin the dump in both hexadecimal and binary representation of given binary file, no 8086-ASM code is printed
+# Prints in stdin the dump in both hexadecimal and binary
+# representation of given binary file, no 8086-ASM code is
+# printed.
+./disassembler <-d OR --dump> <file> # Dumping flag: -d OR --dump 
 ```
 
 ### Cleaning
