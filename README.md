@@ -23,6 +23,21 @@ No external librairies are necessary except the following C headers:
 - stdlib.h
 - string.h
 
+### Supported instructions
+- MOV: r/m <-> reg 
+- MOV: imm -> reg
+- PUSH: reg
+- POP: reg
+- LEA: EA -> reg
+- ADD: r/m + reg <->
+- CMP: imm + r/m
+- TEST: imm & r/m
+- XOR: r/m & reg <->
+- CALL: dirseg
+- JNE/JNZ
+- JNB/JAE
+- INT: spec/unspec type
+
 ### Compilation
 
 To compile the project, you need to run the following command:
