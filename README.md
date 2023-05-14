@@ -1,5 +1,7 @@
 # iAPX86 Disassembler
 
+Still work in progress.
+
 Code in C by FLECHTNER Eliott.
 
 Consists of a disassembler (binary to 8086 ASM) for **iAPX86** (8086 16-BIT HMOS Microprocessor) created by Intel in 1978 (first ever x86 microprocessor).
@@ -23,7 +25,7 @@ No external librairies are necessary except the following C headers:
 - stdlib.h
 - string.h
 
-### Supported instructions
+### Supported instructions (so far)
 - MOV: r/m <-> reg 
 - MOV: imm -> reg
 - PUSH: reg
