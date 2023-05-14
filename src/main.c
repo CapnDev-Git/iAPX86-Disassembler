@@ -112,7 +112,7 @@ void hexdump(const char *path, unsigned char *buffer, size_t *buffer_size,
 
   fclose(pfile);
 
-  *program_size = buffer[8];
+  memcpy(program_size, buffer + 8, 4);
   *buffer_size = read_bytes;
 }
 
@@ -189,7 +189,7 @@ void translate_bin(const unsigned char *p, size_t p_size) {
   const char *SEG[4] = {"es", "cs", "ss", "ds"};
 
   unsigned char byte;
-  unsigned char opcode, d, s, w, reg, mod, rm;
+  unsigned char opcode, d, s, v, w, reg, mod, rm;
   unsigned char b7, b6, b5, b4, b3, b2, b1, b0;
   unsigned char p1, p2, p3, p4, p5, p6, p7, p8;
 
@@ -199,7 +199,7 @@ void translate_bin(const unsigned char *p, size_t p_size) {
   while (a < p_size) {
     // Reset
     il = 0, disp = 0;
-    d = s = w = reg = mod = rm = 0;
+    d = s = v = w = reg = mod = rm = 0;
     b7 = b6 = b5 = b4 = b3 = b2 = b1 = b0 = 0;
     p1 = p2 = p3 = p4 = p5 = p6 = p7 = p8 = 0;
 
@@ -306,6 +306,20 @@ void translate_bin(const unsigned char *p, size_t p_size) {
       }
       break;
 
+    case 0x4:
+      b3 = (byte >> 3) & 0b1;
+
+      if (b3) {
+        // DEC: r/m
+        reg = byte & 0b111;
+
+        il = 1;
+        printi(p, a, il, &ip);
+        printf("dec %s\n", REG16[reg]);
+      }
+
+      break;
+
     case 0x5:
       b3 = (byte >> 3) & 0b1;
       if (!b3) {
@@ -331,7 +345,7 @@ void translate_bin(const unsigned char *p, size_t p_size) {
       p4 = byte & 0b1111;
       switch (p4) {
       case 0x3:
-        // JNB/JAE = Jump if not below/above or equal
+        // JNB/JAE
         il = 2;
         printi(p, a, il, &ip);
 
@@ -340,12 +354,21 @@ void translate_bin(const unsigned char *p, size_t p_size) {
         break;
 
       case 0x5:
-        // JNE/JNZ = Jump if not equal/zero
+        // JNE/JNZ
         il = 2;
         printi(p, a, il, &ip);
 
         disp = p[a + 1];
         printf("jne %04lx\n", ip + disp);
+        break;
+
+      case 0xc:
+        // JL/JNGE
+        il = 2;
+        printi(p, a, il, &ip);
+
+        disp = p[a + 1];
+        printf("jl %04lx\n", ip + disp);
         break;
 
       default:
@@ -373,40 +396,69 @@ void translate_bin(const unsigned char *p, size_t p_size) {
       p2 = (byte >> 2) & 0b11;
       switch (p2) {
       case 0b00:
-        // CMP: immediate with r/m
+        // CMP: imm + r/m
         s = (byte >> 1) & 0b1;
         w = byte & 0b1;
+        reg = (p[a + 1] >> 3) & 0b111;
 
-        mod = (p[a + 1] >> 6) & 0b11;
-        reg = 0b111;
-        rm = p[a + 1] & 0b111;
-        get_adm(p, a + 2, ea, &disp, mod, rm); // offset data if mod != 11 ?
+        switch (reg) {
+        case 0b000:
+          // ADD: imm + r/m
+          mod = (p[a + 1] >> 6) & 0b11;
+          rm = p[a + 1] & 0b111;
+          get_adm(p, a + 2, ea, &disp, mod, rm); // offset data if mod != 11 ?
 
-        il = 3 + ((!s && w) ? 1 : 0) + (disp ? 1 : 0); // to recheck
-        printi(p, a, il, &ip);
+          il = 3 + ((!s && w) ? 1 : 0) + (disp ? 1 : 0); // to recheck
+          printi(p, a, il, &ip);
 
-        if (!s && w) {
-          if (mod == 0b11) {
-            printf("cmp %s, %04x\n", REG16[rm], *(uint16_t *)&p[a + 2]);
+          if (!s && w) {
+            if (mod == 0b11) {
+              printf("add %s, %x\n", REG16[rm], *(uint16_t *)&p[a + 2]);
+            } else {
+              printf("add %s, %x\n", ea, *(uint16_t *)&p[a + 2]);
+            }
           } else {
-            printf("cmp %s, %04x\n", ea, *(uint16_t *)&p[a + 2]);
+            if (mod == 0b11) { // why REG16 here, to recheck
+              printf("add %s, %x\n", REG16[rm], *(uint8_t *)&p[a + 2]);
+            } else {
+              printf("add %s, %x\n", ea, *(uint8_t *)&p[a + 2]);
+            }
           }
-        } else {
-          if (mod == 0b11) {
-            printf("cmp %s, %02x\n", REG8[rm], p[a + 2]);
+
+          break;
+
+        case 0b111:
+          mod = (p[a + 1] >> 6) & 0b11;
+          rm = p[a + 1] & 0b111;
+          get_adm(p, a + 2, ea, &disp, mod, rm); // offset data if mod != 11 ?
+
+          il = 3 + ((!s && w) ? 1 : 0) + (disp ? 1 : 0); // to recheck
+          printi(p, a, il, &ip);
+
+          if (!s && w) {
+            if (mod == 0b11) {
+              printf("cmp %s, %04x\n", REG16[rm], *(uint16_t *)&p[a + 2]);
+            } else {
+              printf("cmp %s, %04x\n", ea, *(uint16_t *)&p[a + 2]);
+            }
           } else {
-            printf("cmp %s, %02x\n", ea, p[a + 2]);
+            if (mod == 0b11) {
+              printf("cmp %s, %02x\n", REG8[rm], p[a + 2]);
+            } else {
+              printf("cmp %s, %02x\n", ea, p[a + 2]);
+            }
           }
+          break;
         }
         break;
 
       case 0b01:
         b1 = (byte >> 1) & 0b1;
         if (!b1) {
-          // TEST: immediate with r/m
+          // TEST: imm + r/m
           printf("TEST: r/m and reg (0x%02x)\n", byte);
         } else {
-          // XCHG: r/m with reg
+          // XCHG: r/m + reg
           printf("XCHG: r/m with reg (0x%02x)\n", byte);
         }
         break;
@@ -469,7 +521,7 @@ void translate_bin(const unsigned char *p, size_t p_size) {
       break;
 
     case 0xb:
-      // MOV: immediate to register
+      // MOV: imm -> register
       w = (byte >> 3) & 0b1;
       reg = byte & 0b111;
 
@@ -483,7 +535,7 @@ void translate_bin(const unsigned char *p, size_t p_size) {
       }
       break;
 
-    case 0xc: // INT: interrupt specified/unspecified type (deftype=3)
+    case 0xc: // INT: spec/unspec
       b7 = byte & 0b1;
       il = 1 + b7;
       printi(p, a, il, &ip);
@@ -495,17 +547,74 @@ void translate_bin(const unsigned char *p, size_t p_size) {
       }
       break;
 
+    case 0xd:
+      // might change to case per case
+      v = (byte >> 1) & 0b1;
+      w = byte & 0b1;
+      mod = (p[a + 1] >> 6) & 0b11;
+      reg = (p[a + 1] >> 3) & 0b111;
+      rm = p[a + 1] & 0b111;
+      get_adm(p, a + 2, ea, &disp, mod, rm);
+
+      switch (reg) { // patch v flag!!!
+      case 0b100:
+        // SHL/SAL: r/m
+        il = 2 + !!disp;
+        printi(p, a, il, &ip);
+
+        if (!v) {
+          if (!w) {
+            if (mod == 0b11)
+              printf("shl %s, 1\n", REG8[rm]);
+            else
+              printf("shl %s, 1\n", ea);
+          } else {
+            if (mod == 0b11)
+              printf("shl %s, 1\n", REG16[rm]);
+            else
+              printf("shl %s, 1\n", ea);
+          }
+        } else {
+          if (!w) {
+            if (mod == 0b11)
+              printf("sal %s, 1\n", REG8[rm]);
+            else
+              printf("sal %s, 1\n", ea);
+          } else {
+            if (mod == 0b11)
+              printf("sal %s, 1\n", REG16[rm]);
+            else
+              printf("sal %s, 1\n", ea);
+          }
+        }
+
+        break;
+      }
+      break;
+
     case 0xe:
-      // CALL: direct within segment
-      il = 3;
-      printi(p, a, il, &ip);
-      printf("call %04lx\n", *(uint16_t *)&p[a + 1] + ip);
+      p4 = byte & 0b1111;
+      switch (p4) {
+      case 0x8:
+        // CALL: dirseg
+        il = 3;
+        printi(p, a, il, &ip);
+        printf("call %04lx\n", *(uint16_t *)&p[a + 1] + ip);
+        break;
+
+      case 0x9:
+        // JMP: dirseg
+        il = 3;
+        printi(p, a, il, &ip);
+        printf("jmp %04lx\n", *(uint16_t *)&p[a + 1] + ip);
+        break;
+      }
       break;
 
     case 0xf:
       p3 = (byte >> 1) & 0b111;
       if (p3 == 0b011) {
-        // TEST: immediate to r/m
+        // TEST: imm -> r/m
         w = byte & 0b1;
         mod = (p[a + 1] >> 6) & 0b11;
         reg = 0b000;
@@ -530,7 +639,7 @@ void translate_bin(const unsigned char *p, size_t p_size) {
         p4 = byte & 0b1111;
         switch (p4) {
         case 0x4:
-          // HLT: halt
+          // HLT
           il = 1;
           printi(p, a, il, &ip);
           printf("hlt\n");
