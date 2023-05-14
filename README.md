@@ -1,6 +1,6 @@
 # iAPX86 Disassembler
 
-Code in C by FLECHTNER Eliott in C.
+Code in C by FLECHTNER Eliott.
 
 Consists of a disassembler (binary to 8086 ASM) for **iAPX86** (8086 16-BIT HMOS Microprocessor) created by Intel in 1978 (first ever x86 microprocessor).
 
