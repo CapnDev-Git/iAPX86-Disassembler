@@ -64,6 +64,12 @@ To execute the program, the following syntax should be used:
 ./disassembler -dump <file> # Dumping flag: -dump
 ```
 
+### Tests example
+```bash
+./disassembler -dump ./tests/1a_c
+./disassembler ./tests/1a_c
+```
+
 ### Cleaning
 
 To clean the project, you need to run the following command:
