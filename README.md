@@ -9,10 +9,13 @@ Developed in the context of [Advanced OS &amp; Virtualization](http://syllabus.s
 ## How to use
 
 ### Compilation Librairies
-This project uses [Makefiles](https://www.wikiwand.com/en/Make_(software)) to compile and create an executable. 
+
+This project uses [Makefiles](<https://www.wikiwand.com/en/Make_(software)>) to compile and create an executable.
 
 ### C Librairies
+
 No external librairies are necessary except the following C headers:
+
 - ctype.h
 - err.h
 - stdint.h
@@ -31,21 +34,23 @@ make
 ### Execution
 
 To execute the program, the following syntax should be used:
+
 ```bash
 # Prints in stdin the disassembled 8086-ASM code of given binary
 # file formatted with address number and both hexadecimal & text
 # representation of the instructions.
-./disassembler <file> 
+./disassembler <file>
 
 # Prints in stdin the dump in both hexadecimal and binary
 # representation of given binary file, no 8086-ASM code is
 # printed.
-./disassembler <-d OR --dump> <file> # Dumping flag: -d OR --dump 
+./disassembler -dump <file> # Dumping flag: -dump
 ```
 
 ### Cleaning
 
 To clean the project, you need to run the following command:
+
 ```bash
 make clean # To clean the project
 ```
