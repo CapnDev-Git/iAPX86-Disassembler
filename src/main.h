@@ -13,9 +13,14 @@
 
 #define EA_STRING_SIZE 20 // Chosen arbitrarily
 
-#define XFORMAT "%02X "        // Format for printing hex
-#define BFORMAT "%08X "        // Format for printing binary
-#define ASMFORMAT "        \t" // Format for printing assembly
+#define XFORMAT "%02X " // Format for printing hex
+#define BFORMAT "%08X " // Format for printing binary
+
+#define IS1 "            "
+#define IS2 "          "
+#define IS3 "        "
+#define IS4 "      "
+#define IS5 "    "
 
 #define BYTE_TO_BINARY_PATTERN "%c%c%c%c%c%c%c%c"
 #define BYTE_TO_BINARY(byte)                                                   \

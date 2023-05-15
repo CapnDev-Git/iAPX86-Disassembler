@@ -94,8 +94,23 @@ void printi(const unsigned char *p, size_t a, size_t il, size_t *ip) {
   for (size_t j = 0; j < il; j++) {
     printf("%02x", p[a + j]);
   }
-  printf("%s", ASMFORMAT);
-
+  switch (il) {
+  case 1:
+    printf("%s", IS1);
+    break;
+  case 2:
+    printf("%s", IS2);
+    break;
+  case 3:
+    printf("%s", IS3);
+    break;
+  case 4:
+    printf("%s", IS4);
+    break;
+  case 5:
+    printf("%s", IS5);
+    break;
+  }
   *ip += il;
 }
 
@@ -121,7 +136,7 @@ void hexdump(const char *path, unsigned char *buffer, size_t *buffer_size,
 void get_adm(const unsigned char *p, size_t a, char *ea, size_t *disp,
              unsigned char mod, unsigned char rm) {
   if (mod == 0b00 && rm == 0b110) {
-    *disp = p[a] + (p[a + 1] << 8);
+    *disp = p[a] + (p[a + 1] << 8); // disp is 16 bit after mod reg r/m byte
     sprintf(ea, "[%04lx]", *disp);
     return;
   }
@@ -130,6 +145,7 @@ void get_adm(const unsigned char *p, size_t a, char *ea, size_t *disp,
   case 0b01:
     *disp = p[a];
     break;
+
   case 0b10:
     *disp = p[a] + (p[a + 1] << 8); // to recheck
     break;
@@ -176,7 +192,7 @@ void get_adm(const unsigned char *p, size_t a, char *ea, size_t *disp,
 
   // Recheck
   if (mod == 0b01 || mod == 0b10)
-    sprintf(ea, "[%s+%zu]", dest, *disp);
+    sprintf(ea, "[%s+%lx]", dest, *disp);
   else if (mod == 0b00)
     sprintf(ea, "[%s]", dest);
   else
@@ -257,12 +273,56 @@ void translate_bin(const unsigned char *p, size_t p_size) {
 
       break;
 
+    case 0x2:
+      // AND: r/m & reg <->
+      d = (byte >> 1) & 0b1;
+      w = byte & 0b1;
+      mod = (p[a + 1] >> 6) & 0b11;
+      reg = (p[a + 1] >> 3) & 0b111;
+      rm = p[a + 1] & 0b111;
+      get_adm(p, a + 1, ea, &disp, mod, rm);
+
+      il = 2 + (disp ? 1 : 0);
+      printi(p, a, il, &ip);
+
+      if (d) {
+        if (!w) {
+          if (mod == 0b11) {
+            printf("and %s, %s\n", REG8[reg], REG8[rm]);
+          } else {
+            printf("and %s, %s\n", REG8[reg], ea);
+          }
+        } else {
+          if (mod == 0b11) {
+            printf("and %s, %s\n", REG16[reg], REG16[rm]);
+          } else {
+            printf("and %s, %s\n", REG16[reg], ea);
+          }
+        }
+      } else {
+        if (!w) {
+          if (mod == 0b11) {
+            printf("and %s, %s\n", REG8[rm], REG8[reg]);
+          } else {
+            printf("and %s, %s\n", ea, REG8[reg]);
+          }
+        } else {
+          if (mod == 0b11) {
+            printf("and %s, %s\n", REG16[rm], REG16[reg]);
+          } else {
+            printf("and %s, %s\n", ea, REG16[reg]);
+          }
+        }
+      }
+
+      break;
+
     case 0x3:
       b2 = (byte >> 2) & 0b1;
       w = byte & 0b1;
 
       if (!b2) {
-        // XOR: r/m and reg to either
+        // XOR: r/m & reg <->
         il = 2;
         printi(p, a, il, &ip);
 
@@ -353,6 +413,15 @@ void translate_bin(const unsigned char *p, size_t p_size) {
         printf("jnb %04lx\n", ip + disp);
         break;
 
+      case 0x4:
+        // JE/JZ
+        il = 2;
+        printi(p, a, il, &ip);
+
+        disp = p[a + 1];
+        printf("je %04lx\n", ip + disp);
+        break;
+
       case 0x5:
         // JNE/JNZ
         il = 2;
@@ -391,132 +460,150 @@ void translate_bin(const unsigned char *p, size_t p_size) {
         printi(p, a, il, &ip);
 
         printf("lea %s, %s\n", REG16[reg], ea);
-      }
-
-      p2 = (byte >> 2) & 0b11;
-      switch (p2) {
-      case 0b00:
-        // CMP: imm + r/m
-        s = (byte >> 1) & 0b1;
-        w = byte & 0b1;
-        reg = (p[a + 1] >> 3) & 0b111;
-
-        switch (reg) {
-        case 0b000:
-          // ADD: imm + r/m
-          mod = (p[a + 1] >> 6) & 0b11;
-          rm = p[a + 1] & 0b111;
-          get_adm(p, a + 2, ea, &disp, mod, rm); // offset data if mod != 11 ?
-
-          il = 3 + ((!s && w) ? 1 : 0) + (disp ? 1 : 0); // to recheck
-          printi(p, a, il, &ip);
-
-          if (!s && w) {
-            if (mod == 0b11) {
-              printf("add %s, %x\n", REG16[rm], *(uint16_t *)&p[a + 2]);
-            } else {
-              printf("add %s, %x\n", ea, *(uint16_t *)&p[a + 2]);
-            }
-          } else {
-            if (mod == 0b11) { // why REG16 here, to recheck
-              printf("add %s, %x\n", REG16[rm], *(uint8_t *)&p[a + 2]);
-            } else {
-              printf("add %s, %x\n", ea, *(uint8_t *)&p[a + 2]);
-            }
-          }
-
-          break;
-
-        case 0b111:
-          mod = (p[a + 1] >> 6) & 0b11;
-          rm = p[a + 1] & 0b111;
-          get_adm(p, a + 2, ea, &disp, mod, rm); // offset data if mod != 11 ?
-
-          il = 3 + ((!s && w) ? 1 : 0) + (disp ? 1 : 0); // to recheck
-          printi(p, a, il, &ip);
-
-          if (!s && w) {
-            if (mod == 0b11) {
-              printf("cmp %s, %04x\n", REG16[rm], *(uint16_t *)&p[a + 2]);
-            } else {
-              printf("cmp %s, %04x\n", ea, *(uint16_t *)&p[a + 2]);
-            }
-          } else {
-            if (mod == 0b11) {
-              printf("cmp %s, %02x\n", REG8[rm], p[a + 2]);
-            } else {
-              printf("cmp %s, %02x\n", ea, p[a + 2]);
-            }
-          }
-          break;
-        }
-        break;
-
-      case 0b01:
-        b1 = (byte >> 1) & 0b1;
-        if (!b1) {
-          // TEST: imm + r/m
-          printf("TEST: r/m and reg (0x%02x)\n", byte);
-        } else {
-          // XCHG: r/m + reg
-          printf("XCHG: r/m with reg (0x%02x)\n", byte);
-        }
-        break;
-
-      case 0b10:
-        // MOV: r/m <-> reg
-        d = (byte >> 1) & 0b1;
-        w = byte & 0b1;
-        mod = (p[a + 1] >> 6) & 0b11;
-        reg = (p[a + 1] >> 3) & 0b111;
-        rm = p[a + 1] & 0b111;
-        get_adm(p, a + 2, ea, &disp, mod, rm);
-
-        il = (mod == 0b00 && rm == 0b110) ? 4 : 2 + !!disp;
-        printi(p, a, il, &ip);
-
-        if (d) {
-          if (!w) {
-            if (mod == 0b11)
-              printf("mov %s, %s\n", REG8[reg], REG8[rm]);
-            else
-              printf("mov %s, %s\n", REG8[reg], ea);
-          } else {
-            if (mod == 0b11)
-              printf("mov %s, %s\n", REG16[reg], REG16[rm]);
-            else
-              printf("mov %s, %s\n", REG16[reg], ea);
-          }
-        } else {
-          if (!w) {
-            if (mod == 0b11)
-              printf("mov %s, %s\n", REG8[rm], REG8[reg]);
-            else
-              printf("mov %s, %s\n", ea, REG8[reg]);
-          } else {
-            if (mod == 0b11)
-              printf("mov %s, %s\n", REG16[rm], REG16[reg]);
-            else
-              printf("mov %s, %s\n", ea, REG16[reg]);
-          }
-        }
-        break;
-
-      case 0b11:
-        p2 = byte & 0b11;
-
+      } else {
+        p2 = (byte >> 2) & 0b11;
         switch (p2) {
-        case 0b10:
-          // MOV: r/m -> sreg
-          printf("MOV: r/m -> sreg (0x%02x)\n", byte);
+        case 0b00:
+          s = (byte >> 1) & 0b1;
+          w = byte & 0b1;
+          reg = (p[a + 1] >> 3) & 0b111;
+
+          switch (reg) {
+          case 0b000:
+            // ADD: imm + r/m
+            mod = (p[a + 1] >> 6) & 0b11;
+            rm = p[a + 1] & 0b111;
+            get_adm(p, a + 2, ea, &disp, mod, rm); // offset data if mod != 11 ?
+
+            il = 3 + ((!s && w) ? 1 : 0) + (disp ? 1 : 0); // to recheck
+            printi(p, a, il, &ip);
+
+            if (!s && w) {
+              if (mod == 0b11) {
+                printf("add %s, %x\n", REG16[rm], *(uint16_t *)&p[a + 2]);
+              } else {
+                printf("add %s, %x\n", ea, *(uint16_t *)&p[a + 2]);
+              }
+            } else {
+              if (mod == 0b11) { // why REG16 here, to recheck
+                printf("add %s, %x\n", REG16[rm], *(uint8_t *)&p[a + 2]);
+              } else {
+                printf("add %s, %x\n", ea, *(uint8_t *)&p[a + 2]);
+              }
+            }
+            break;
+
+          case 0b111:
+            // CMP: imm + r/m
+            mod = (p[a + 1] >> 6) & 0b11;
+            rm = p[a + 1] & 0b111;
+            get_adm(p, a + 2, ea, &disp, mod, rm); // offset data if mod != 11 ?
+
+            il = 3 + (w ? 1 : 0) + (disp ? 1 : 0); // to recheck
+            printi(p, a, il, &ip);
+
+            p2 = byte & 0b11;
+            switch (p2) {
+            case 0b01:
+              if (mod == 0b11) {
+                printf("cmp %s, %04x\n", REG16[rm], *(uint16_t *)&p[a + 2]);
+              } else {
+                printf("cmp %s, %04x\n", ea, *(uint16_t *)&p[a + 2]);
+              }
+              break;
+
+            case 0b11:
+              if (mod == 0b11) {
+                printf("cmp %s, %x\n", REG16[rm],
+                       *(uint8_t *)&p[a + 3]); // to recheck
+              } else {
+                printf("cmp %s, %x\n", ea, *(uint8_t *)&p[a + 3]);
+              }
+              break;
+
+            default: // to recheck
+              if (mod == 0b11) {
+                printf("cmp %s, %02x\n", REG8[rm], p[a + 2]);
+              } else {
+                printf("cmp %s, %02x\n", ea, p[a + 2]);
+              }
+              break;
+            }
+          }
           break;
 
-        case 0b00:
-          // MOV: sreg -> r/m
-          printf("MOV: sreg -> r/m (0x%02x)\n", byte);
+        case 0b01:
+          b1 = (byte >> 1) & 0b1;
+          if (!b1) {
+            // TEST: imm + r/m
+            printf("TEST: r/m and reg (0x%02x)\n", byte);
+          } else {
+            // XCHG: r/m + reg
+            printf("XCHG: r/m with reg (0x%02x)\n", byte);
+          }
+          break;
+
+        case 0b10:
+          // MOV: r/m <-> reg
+          d = (byte >> 1) & 0b1;
+          w = byte & 0b1;
+          mod = (p[a + 1] >> 6) & 0b11;
+          reg = (p[a + 1] >> 3) & 0b111;
+          rm = p[a + 1] & 0b111;
+          get_adm(p, a + 2, ea, &disp, mod, rm);
+
+          // recheck size
+          if (mod == 0b00 && rm == 0b110)
+            il = 4;
+          else if (mod == 0b10)
+            il = 4;
+          else
+            il = 2 + !!disp;
+          printi(p, a, il, &ip);
+
+          if (d) {
+            if (!w) {
+              if (mod == 0b11)
+                printf("mov %s, %s\n", REG8[reg], REG8[rm]);
+              else
+                printf("mov %s, %s\n", REG8[reg], ea);
+            } else {
+              if (mod == 0b11)
+                printf("mov %s, %s\n", REG16[reg], REG16[rm]);
+              else
+                printf("mov %s, %s\n", REG16[reg], ea);
+            }
+          } else {
+            if (!w) {
+              if (mod == 0b11)
+                printf("mov %s, %s\n", REG8[rm], REG8[reg]);
+              else
+                printf("mov %s, %s\n", ea, REG8[reg]);
+            } else {
+              if (mod == 0b11)
+                printf("mov %s, %s\n", REG16[rm], REG16[reg]);
+              else
+                printf("mov %s, %s\n", ea, REG16[reg]);
+            }
+          }
+          break;
+
+        case 0b11:
+          p2 = byte & 0b11;
+
+          switch (p2) {
+          case 0b10:
+            // MOV: r/m -> sreg
+            printf("MOV: r/m -> sreg (0x%02x)\n", byte);
+            break;
+
+          case 0b00:
+            // MOV: sreg -> r/m
+            printf("MOV: sreg -> r/m (0x%02x)\n", byte);
+            break;
+          }
           break;
         }
-        break;
       }
       break;
 
@@ -574,20 +661,11 @@ void translate_bin(const unsigned char *p, size_t p_size) {
             else
               printf("shl %s, 1\n", ea);
           }
-        } else {
-          if (!w) {
-            if (mod == 0b11)
-              printf("sal %s, 1\n", REG8[rm]);
-            else
-              printf("sal %s, 1\n", ea);
-          } else {
-            if (mod == 0b11)
-              printf("sal %s, 1\n", REG16[rm]);
-            else
-              printf("sal %s, 1\n", ea);
-          }
-        }
+        } // else case to determine (setup CL register in some way...)
+        break;
 
+      default:
+        printf("Unmatched case 0xd (0x%02x)\n", byte);
         break;
       }
       break;
@@ -599,14 +677,25 @@ void translate_bin(const unsigned char *p, size_t p_size) {
         // CALL: dirseg
         il = 3;
         printi(p, a, il, &ip);
-        printf("call %04lx\n", *(uint16_t *)&p[a + 1] + ip);
+        printf("call %04lx\n", *(int16_t *)&p[a + 1] + ip);
         break;
 
       case 0x9:
         // JMP: dirseg
         il = 3;
         printi(p, a, il, &ip);
-        printf("jmp %04lx\n", *(uint16_t *)&p[a + 1] + ip);
+        printf("jmp %04lx\n", *(int16_t *)&p[a + 1] + ip);
+        break;
+
+      case 0xb:
+        // JMP SHORT: dirseg short
+        il = 2;
+        printi(p, a, il, &ip);
+        printf("jmp short %04lx\n", *(int8_t *)&p[a + 1] + ip);
+        break;
+
+      default:
+        printf("Unmatched case of 0xe: %02x\n", byte);
         break;
       }
       break;
@@ -645,8 +734,44 @@ void translate_bin(const unsigned char *p, size_t p_size) {
           printf("hlt\n");
           break;
 
+        case 0xf:
+          reg = (p[a + 1] >> 3) & 0b111;
+          switch (reg) {
+          case 0b010:
+            // CALL: indseg
+            mod = (p[a + 1] >> 6) & 0b11;
+            rm = p[a + 1] & 0b111;
+            get_adm(p, a + 2, ea, &disp, mod, rm);
+
+            il = 2 + !!disp;
+            printi(p, a, il, &ip);
+
+            if (mod == 0b11)
+              printf("call %s\n", REG16[rm]);
+            else
+              printf("call %s\n", ea); // not sure, to recheck
+            break;
+
+          case 0b110:
+            // PUSH: reg
+            mod = (p[a + 1] >> 6) & 0b11;
+            rm = p[a + 1] & 0b111;
+            get_adm(p, a + 2, ea, &disp, mod, rm);
+
+            il = 2 + !!disp;
+            printi(p, a, il, &ip);
+
+            if (mod == 0b11)
+              printf("push %s\n", REG16[rm]);
+            else
+              printf("push %s\n", ea); // not sure, to recheck
+
+            break;
+          }
+          break;
+
         default:
-          printf("Unmatched case with starting 0xf (0x%02x)\n", byte);
+          printf("Unmatched case 0xf (0x%02x)\n", byte);
           break;
         }
       }
