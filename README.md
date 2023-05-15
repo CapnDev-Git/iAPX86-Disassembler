@@ -26,7 +26,10 @@ No external librairies are necessary except the following C headers:
 - string.h
 
 ### Supported instructions (so far)
-- MOV: r/m <-> reg 
+
+Confer to documentation for more information (./doc/iAPX86.pdf).
+
+- MOV: r/m <-> reg
 - MOV: imm -> reg
 - PUSH: reg
 - POP: reg
@@ -65,6 +68,7 @@ To execute the program, the following syntax should be used:
 ```
 
 ### Tests example
+
 ```bash
 ./disassembler -dump ./tests/1a_c
 ./disassembler ./tests/1a_c
