@@ -92,16 +92,16 @@ To execute the program, the following syntax should be used:
 # Prints in stdin the dump in both hexadecimal and binary
 # representation of given binary file, no 8086-ASM code is
 # printed.
-./disassembler -dump <file> # Dumping flag: -dump
+./disassembler <-d OR --dump> <file> # Dumping flag: -d or --dump
 ```
 
 ### Tests example
 
 ```bash
-./disassembler -dump ./tests/1s_c
+./disassembler -d ./tests/1s_c
 ./disassembler ./tests/1s_c
 
-./disassembler -dump ./tests/1a_c
+./disassembler -d ./tests/1a_c
 ./disassembler ./tests/1a_c
 ```
 
