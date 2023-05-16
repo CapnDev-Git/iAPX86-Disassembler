@@ -1016,13 +1016,13 @@ int main(int argc, char **argv) {
   if (argc < 2 || argc > 3)
     errx(1, "Usage: %s <flags> <file>", argv[0]);
 
-  if (argc == 2 && !strcmp(argv[1], "-dump"))
-    errx(1, "Usage: %s -dump <file>", argv[0]);
+  if (argc == 2 && (!strcmp(argv[1], "-d") || !strcmp(argv[1], "--dump")))
+    errx(1, "Usage: %s -d <file>", argv[0]);
 
   if (argc == 3 && argv[1][0] != '-')
     errx(1, "Provided flag not properly formatted: %s", argv[1]);
 
-  if (argc == 3 && strcmp(argv[1], "-dump"))
+  if (argc == 3 && strcmp(argv[1], "-d") && strcmp(argv[1], "--dump"))
     errx(1, "Unknown flag: %s", argv[1]);
 
   // Initialize the buffer
@@ -1048,7 +1048,7 @@ int main(int argc, char **argv) {
   } else {
     // Print the hexadecimal dump & the text area
     print_hexdump(buffer, buffer_size);
-    printb(program, program_size, BYTE_PER_LINE);
+    // printb(program, program_size, BYTE_PER_LINE);
     printf("Text-area size: 0x%08lx = %zu bytes\n", program_size, program_size);
   }
 

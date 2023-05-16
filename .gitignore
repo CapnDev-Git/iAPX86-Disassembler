@@ -1,5 +1,7 @@
 # Software
 .vscode/
+main
+disassembler
 
 # Prerequisites
 *.d
