@@ -37,7 +37,7 @@ Confer to documentation for more information (./doc/iAPX86.pdf).
 - IN: fixed port, variable port
 - LEA: EA -> reg
 
-**ARITHMETIC**
+**ARITHMETIC:**
 
 - ADD: r/m + reg <->, imm -> r/m
 - SUB: imm <- r/m
@@ -46,7 +46,7 @@ Confer to documentation for more information (./doc/iAPX86.pdf).
 - NEG
 - CMP: imm + r/m
 
-**LOGIC**
+**LOGIC:**
 
 - NOT
 - SHL/SAL
@@ -55,7 +55,7 @@ Confer to documentation for more information (./doc/iAPX86.pdf).
 - OR: r/m & reg <->
 - XOR: r/m & reg <->
 
-**CONTROL TRANSFER**
+**CONTROL TRANSFER:**
 
 - CALL: dirw|seg, indirw|seg
 - JMP: dirw|seg, dirw|seg-short
@@ -67,7 +67,7 @@ Confer to documentation for more information (./doc/iAPX86.pdf).
 - JNB/JAE
 - INT: spec, 3
 
-**PROCESSOR CONTROLL**
+**PROCESSOR CONTROL:**
 
 - HLT
 
