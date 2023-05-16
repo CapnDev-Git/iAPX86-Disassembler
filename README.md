@@ -29,19 +29,47 @@ No external librairies are necessary except the following C headers:
 
 Confer to documentation for more information (./doc/iAPX86.pdf).
 
-- MOV: r/m <-> reg
-- MOV: imm -> reg
-- PUSH: reg
+**DATA TRANSFER:**
+
+- MOV: r/m <-> reg, imm -> reg
+- PUSH: r/m, reg
 - POP: reg
+- IN: fixed port, variable port
 - LEA: EA -> reg
-- ADD: r/m + reg <->
+
+**ARITHMETIC**
+
+- ADD: r/m + reg <->, imm -> r/m
+- SUB: imm <- r/m
+- SSB: r/m & reg <->
+- DEC: reg
+- NEG
 - CMP: imm + r/m
+
+**LOGIC**
+
+- NOT
+- SHL/SAL
+- AND: r/m & reg <->
 - TEST: imm & r/m
+- OR: r/m & reg <->
 - XOR: r/m & reg <->
-- CALL: dirseg
+
+**CONTROL TRANSFER**
+
+- CALL: dirw|seg, indirw|seg
+- JMP: dirw|seg, dirw|seg-short
+- RET: w|seg
+- JE/JZ
+- JL/JNGE
 - JNE/JNZ
+- JNL/JGE
 - JNB/JAE
-- INT: spec/unspec type
+- INT: spec, 3
+
+**PROCESSOR CONTROLL**
+
+- HLT
 
 ### Compilation
 
@@ -70,6 +98,9 @@ To execute the program, the following syntax should be used:
 ### Tests example
 
 ```bash
+./disassembler -dump ./tests/1s_c
+./disassembler ./tests/1s_c
+
 ./disassembler -dump ./tests/1a_c
 ./disassembler ./tests/1a_c
 ```
