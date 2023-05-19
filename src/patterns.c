@@ -619,7 +619,7 @@ void f0x9(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
     // CWD
     il = 1;
     print4b(p, a, il, ip);
-    printf("cdw\n");
+    printf("cwd\n");
     break;
   }
 

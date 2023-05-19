@@ -76,7 +76,7 @@ Confer to documentation for more information (./doc/iAPX86.pdf).
 To compile the project, you need to run the following command:
 
 ```bash
-make
+make # Creates the "disassembler" executable & "test/utest" executable
 ```
 
 ### Execution
@@ -92,14 +92,31 @@ To execute the program, the following syntax should be used:
 # Prints in stdin the dump in both hexadecimal and binary
 # representation of given binary file, no 8086-ASM code is
 # printed.
-./disassembler <-d OR --dump> <file> # Dumping flag: -d or --dump
+./disassembler <-d|--dump> <file> # Dumping flag: -d or --dump
 ```
 
 ### Tests example
 
+The following commands are examples of how to use the program:
+
 ```bash
-./disassembler -d ./tests/1a_c
-./disassembler ./tests/1a_c
+./disassembler -d ./test/execs/1a_c
+./disassembler ./test/execs/1a_c
+```
+
+The executable file located in `./test/utest` folder after compiling the poject with make can be used as a unit tests for the disassembler on the provided test files in `./test/execs`. To use it, you need to run the following command:
+
+```bash
+./test/utest [-v|--verbose] <file|directory>
+```
+
+The `-v` or `--verbose` flag can be used to print the disassembled code of the test files.
+
+## Unit tests example
+
+```bash
+./test/utest --verbose ./test/execs/2c_a.out # For testing a single file with verbose
+./test/utest -v ./test/execs # For testing the entire directory with verbose
 ```
 
 ### Cleaning

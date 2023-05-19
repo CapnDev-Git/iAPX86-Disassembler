@@ -40,3 +40,7 @@ void print_headers(char *format, size_t byte_len, size_t line_len);
 void print_hexdump(const unsigned char *buffer, size_t buffer_size);
 void printb(const unsigned char *bin_str, size_t size, size_t byte_per_line);
 void print4b(const unsigned char *p, size_t a, size_t il, size_t *ip);
+
+void printOK(const char *filename);
+void printKO(const char *filename);
+void printDiff(const char *errorLine, const char *ref);

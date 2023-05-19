@@ -89,7 +89,6 @@ void translate_bin(const unsigned char *p, size_t p_size) {
       printf("(undefined) %02x\n", p[a]);
       ip++;
     }
-    a = ip;
-    pip = ip;
+    a = pip = ip;
   }
 }

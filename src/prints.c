@@ -115,3 +115,51 @@ void print4b(const unsigned char *p, size_t a, size_t il, size_t *ip) {
 
   *ip += il;
 }
+
+void printOK(const char *filename) {
+  printf("\033[1;32mOK\033[0m %s\n", filename);
+}
+
+void printKO(const char *filename) {
+  printf("\033[1;31mKO\033[0m %s\n", filename);
+}
+
+void printDiff(const char *errorLine, const char *ref) {
+  const char *lineStart = errorLine;
+  const char *lineEnd = errorLine;
+  while (lineStart > errorLine - 50 && *lineStart != '\n')
+    --lineStart;
+  while (*lineEnd != '\0' && *lineEnd != '\n')
+    ++lineEnd;
+
+  printf("\033[0m");
+  for (const char *ch = lineStart; ch < errorLine; ++ch)
+    putchar(*ch);
+
+  printf("\033[1;31m");
+  putchar(*errorLine);
+
+  for (const char *ch = errorLine + 1; ch < lineEnd; ++ch)
+    putchar(*ch);
+  printf("\033[0m");
+
+  lineStart = ref;
+  lineEnd = ref;
+  while (lineStart > ref - 50 && *lineStart != '\n')
+    --lineStart;
+  while (*lineEnd != '\0' && *lineEnd != '\n')
+    ++lineEnd;
+
+  printf("\033[0m");
+  for (const char *ch = lineStart; ch < ref; ++ch) {
+    putchar(*ch);
+  }
+
+  printf("\033[1;32m");
+  putchar(*ref);
+  for (const char *ch = ref + 1; ch < lineEnd; ++ch) {
+    putchar(*ch);
+  }
+
+  printf("\033[0m\n");
+}

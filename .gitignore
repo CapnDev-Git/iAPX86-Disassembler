@@ -2,6 +2,7 @@
 .vscode/
 main
 disassembler
+AUTHORS
 
 # Prerequisites
 *.d
