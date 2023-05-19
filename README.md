@@ -98,9 +98,6 @@ To execute the program, the following syntax should be used:
 ### Tests example
 
 ```bash
-./disassembler -d ./tests/1s_c
-./disassembler ./tests/1s_c
-
 ./disassembler -d ./tests/1a_c
 ./disassembler ./tests/1a_c
 ```
