@@ -1,6 +1,6 @@
 # iAPX86 Disassembler
 
-Still work in progress.
+**_Still work in progress._**
 
 Code in C by FLECHTNER Eliott.
 
@@ -76,7 +76,7 @@ Confer to documentation for more information (./doc/iAPX86.pdf).
 To compile the project, you need to run the following command:
 
 ```bash
-make # Creates the "disassembler" executable & "test/utest" executable
+make # Creates the "disassembler" executable & test/utest executable
 ```
 
 ### Execution
@@ -92,7 +92,7 @@ To execute the program, the following syntax should be used:
 # Prints in stdin the dump in both hexadecimal and binary
 # representation of given binary file, no 8086-ASM code is
 # printed.
-./disassembler <-d|--dump> <file> # Dumping flag: -d or --dump
+./disassembler [-d|--dump] <file> # Dumping flag: -d or --dump
 ```
 
 ### Tests example
@@ -110,7 +110,7 @@ The executable file located in `./test/utest` folder after compiling the poject 
 ./test/utest [-v|--verbose] <file|directory>
 ```
 
-The `-v` or `--verbose` flag can be used to print the disassembled code of the test files.
+The `-v` or `--verbose` flag can be used to print the details of the missmatches between the expected output and the actual output from reference disassembler.
 
 ## Unit tests example
 
