@@ -6,17 +6,17 @@
 - [Compilation](#compilation)
   - [Compilation Librairies](#compilation-librairies)
   - [C Librairies](#c-librairies)
-  - [Supported instructions (so far)](#supported-instructions-so-far)
+- [Supported instructions](#supported-instructions)
 - [How to use](#how-to-use)
   - [Compilation](#compilation-1)
   - [Execution](#execution)
-  - [Tests example](#tests-example)
+  - [Testing](#testing)
     - [Unit tests example](#unit-tests-example)
   - [Cleaning](#cleaning)
 
 ## Introduction
 
-**_Still work in progress._**
+**_Still work in progress. Not all instructions are supported yet._**
 
 Code in C by FLECHTNER Eliott.
 
@@ -41,9 +41,11 @@ No external librairies are necessary except the following C headers:
 - stdlib.h
 - string.h
 
-### Supported instructions (so far)
+## Supported instructions
 
-Confer to documentation for more information (./doc/iAPX86.pdf).
+**_Instruction set estimated completion percentage: 42% (50 / 120)_**
+
+Confer to [documentation](./doc/iAPX86.pdf) for more details on instructions & addressing modes.
 
 **DATA TRANSFER:**
 
@@ -113,7 +115,7 @@ To execute the program, the following syntax should be used:
 ./disassembler [-d|--dump] <file> # Dumping flag: -d or --dump
 ```
 
-### Tests example
+### Testing
 
 The following commands are examples of how to use the program:
 
