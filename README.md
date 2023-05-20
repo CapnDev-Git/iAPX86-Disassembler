@@ -1,5 +1,21 @@
 # iAPX86 Disassembler
 
+## Table of contents
+
+- [Introduction](#introduction)
+- [Compilation](#compilation)
+  - [Compilation Librairies](#compilation-librairies)
+  - [C Librairies](#c-librairies)
+  - [Supported instructions (so far)](#supported-instructions-so-far)
+- [How to use](#how-to-use)
+  - [Compilation](#compilation-1)
+  - [Execution](#execution)
+  - [Tests example](#tests-example)
+    - [Unit tests example](#unit-tests-example)
+  - [Cleaning](#cleaning)
+
+## Introduction
+
 **_Still work in progress._**
 
 Code in C by FLECHTNER Eliott.
@@ -8,7 +24,7 @@ Consists of a disassembler (binary to 8086 ASM) for **iAPX86** (8086 16-BIT HMOS
 
 Developed in the context of [Advanced OS &amp; Virtualization](http://syllabus.sic.shibaura-it.ac.jp/syllabus/2023/din/138807.html?g=101) class by Instructor [**福田 浩章**](http://resea.shibaura-it.ac.jp/?2830ea708a1eddbb7e8bb6c2a366b751) (FUKUDA Hiroaki) at [**芝浦工業大学**](https://www.shibaura-it.ac.jp/en/) (Shibaura Institute of Technology) in 東京都 (Tōkyō-to, Japan).
 
-## How to use
+## Compilation
 
 ### Compilation Librairies
 
@@ -71,6 +87,8 @@ Confer to documentation for more information (./doc/iAPX86.pdf).
 
 - HLT
 
+## How to use
+
 ### Compilation
 
 To compile the project, you need to run the following command:
@@ -112,7 +130,7 @@ The executable file located in `./test/utest` folder after compiling the poject 
 
 The `-v` or `--verbose` flag can be used to print the details of the missmatches between the expected output and the actual output from reference disassembler.
 
-## Unit tests example
+#### Unit tests example
 
 ```bash
 ./test/utest --verbose ./test/execs/2c_a.out # For testing a single file with verbose
