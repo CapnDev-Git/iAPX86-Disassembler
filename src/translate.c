@@ -6,6 +6,8 @@ void get_adm(const unsigned char *p, size_t a, unsigned char mod,
              unsigned char rm, char *ea, size_t *ds) {
 
   size_t disp = 0;
+  unsigned char adisp;
+
   if (mod == 0b00 && rm == 0b110) {
     *ds = 2;
     disp = p[a] + (p[a + 1] << 8);
@@ -45,14 +47,15 @@ void get_adm(const unsigned char *p, size_t a, unsigned char mod,
   case 0b01:
     *ds = 1;
     disp = p[a]; // to maybe define as signed char
-    unsigned char adisp = (disp & 0x80) ? (~disp + 1) : disp;
+    adisp = (disp & 0x80) ? (~disp + 1) : disp;
     sprintf(ea, "[%s%c%x]", dest, (disp & 0x80) ? '-' : '+', adisp);
     break;
 
   case 0b10:
     *ds = 2;
-    disp = p[a] + (p[a + 1] << 8);
-    sprintf(ea, "[%s+%lx]", dest, disp);
+    disp = (int16_t)((p[a + 1] << 8) | p[a]); // disp-high, disp-low
+    int16_t adisp16 = (disp & 0x8000) ? (~disp + 1) : disp;
+    sprintf(ea, "[%s%c%x]", dest, (disp & 0x8000) ? '-' : '+', adisp16);
     break;
 
   case 0b00:

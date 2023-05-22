@@ -111,6 +111,9 @@ void print4b(const unsigned char *p, size_t a, size_t il, size_t *ip) {
   case 5:
     printf("%s", IS5);
     break;
+  case 6:
+    printf("%s", IS6);
+    break;
   }
 
   *ip += il;

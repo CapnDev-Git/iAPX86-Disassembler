@@ -26,6 +26,7 @@
 #define IS3 "        "     // Instruction spacing for 3 bytes
 #define IS4 "      "       // Instruction spacing for 4 bytes
 #define IS5 "    "         // Instruction spacing for 5 bytes
+#define IS6 "  "           // Instruction spacing for 6 bytes
 #define SPACE " "          // Regular space (for dump printing)
 #define SPACE2 "  "        // Double space (for dump printing)
 
