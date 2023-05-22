@@ -43,7 +43,7 @@ No external librairies are necessary except the following C headers:
 
 ## Supported instructions
 
-**_Instruction set estimated completion percentage: 42% (50 / 120)_**
+**_Instruction set estimated completion percentage: ~60% (73 / 120)_**
 
 Confer to [documentation](./doc/iAPX86.pdf) for more details on instructions & addressing modes.
 
