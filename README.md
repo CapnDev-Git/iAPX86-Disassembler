@@ -47,7 +47,24 @@ No external librairies are necessary except the following C headers:
 
 Confer to [documentation](./doc/iAPX86.pdf) for more details on instructions & addressing modes.
 
-**DATA TRANSFER:**
+**Legend:**
+-> = to
+<- = from
+<-> = either
+\+ = with
+& = and
+r/m = Register/Memory
+reg = Register
+acc = Accumulator
+imm = Immediate
+EA = Effective Address
+w| = within
+dir = Direct
+indir = Indirect
+addimm = Adding Immediate
+(un)spec = (Un)Specified
+
+### DATA TRANSFER:
 
 - MOV: r/m <-> reg, imm -> r/m, imm -> reg
 - PUSH: r/m, reg
@@ -56,7 +73,7 @@ Confer to [documentation](./doc/iAPX86.pdf) for more details on instructions & a
 - IN: fixed/variable port
 - LEA: EA -> reg
 
-**ARITHMETIC:**
+### ARITHMETIC:
 
 - ADD: r/m + reg <->, imm -> r/m
 - ADC: r/m + reg <->
@@ -71,7 +88,7 @@ Confer to [documentation](./doc/iAPX86.pdf) for more details on instructions & a
 - CBW
 - CWD
 
-**LOGIC:**
+### LOGIC:
 
 - NOT
 - SHL/SAL
@@ -83,7 +100,7 @@ Confer to [documentation](./doc/iAPX86.pdf) for more details on instructions & a
 - OR: r/m & reg <->, imm -> r/m
 - XOR: r/m & reg <->
 
-**STRING MANIPULATION:**
+### STRING MANIPULATION:
 
 - REP
 - MOVS
@@ -92,7 +109,7 @@ Confer to [documentation](./doc/iAPX86.pdf) for more details on instructions & a
 - LODS
 - STOS
 
-**CONTROL TRANSFER:**
+### CONTROL TRANSFER:
 
 - CALL: dirw|seg, indirw|seg
 - JMP: dirw|seg, dirw|seg-short, indirw|seg
@@ -110,7 +127,7 @@ Confer to [documentation](./doc/iAPX86.pdf) for more details on instructions & a
 - LOOP
 - INT: spec, 3
 
-**PROCESSOR CONTROL:**
+### PROCESSOR CONTROL:
 
 - CLD
 - STD
