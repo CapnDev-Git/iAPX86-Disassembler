@@ -4,7 +4,6 @@ const char *REG8[8] = {"al", "cl", "dl", "bl", "ah", "ch", "dh", "bh"};
 const char *REG16[8] = {"ax", "cx", "dx", "bx", "sp", "bp", "si", "di"};
 const char *SEGREG[4] = {"es", "cs", "ss", "ds"};
 
-// NOT SAFE
 unsigned char d, w, s, v, mod, reg, rm;
 unsigned char b7, b6, b5, b4, b3, b2, b1, b0;
 unsigned char p1, p2, p3, p4, p5, p6, p7, p8;
@@ -167,7 +166,7 @@ void f0x2(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
     mod = (p[a + 1] >> 6) & 0b11;
     reg = (p[a + 1] >> 3) & 0b111;
     rm = p[a + 1] & 0b111;
-    get_adm(p, a + 1, mod, rm, ea, &ds);
+    get_adm(p, a + 2, mod, rm, ea, &ds);
 
     il = 2 + ds;
     print4b(p, a, il, ip);
@@ -224,19 +223,19 @@ void f0x2(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
 void f0x3(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
   char *ea = malloc(EA_STRING_SIZE * sizeof(unsigned char));
 
-  b2 = (LSB4 >> 2) & 0b1;
-  w = LSB4 & 0b1;
-
-  if (!b2) {
+  p2 = (LSB4 >> 2) & 0b11;
+  switch (p2) {
+  case 0b00:
     // XOR: r/m & reg <->
-    il = 2;
-    print4b(p, a, il, ip);
-
     d = (LSB4 >> 1) & 0b1;
+    w = LSB4 & 0b1;
     mod = (p[a + 1] >> 6) & 0b11;
     reg = (p[a + 1] >> 3) & 0b111;
     rm = p[a + 1] & 0b111;
     get_adm(p, a + 2, mod, rm, ea, &ds);
+
+    il = 2;
+    print4b(p, a, il, ip);
 
     if (d) {
       if (!w) {
@@ -267,6 +266,55 @@ void f0x3(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
         }
       }
     }
+    break;
+
+  case 0b10:
+    // CMP: r/m & reg
+    d = (LSB4 >> 1) & 0b1;
+    w = LSB4 & 0b1;
+    mod = (p[a + 1] >> 6) & 0b11;
+    reg = (p[a + 1] >> 3) & 0b111;
+    rm = p[a + 1] & 0b111;
+    get_adm(p, a + 2, mod, rm, ea, &ds);
+
+    il = 2 + ds;
+    print4b(p, a, il, ip);
+
+    if (d) {
+      if (!w) {
+        if (mod == 0b11) {
+          printf("cmp %s, %s\n", REG8[reg], REG8[rm]);
+        } else {
+          printf("cmp %s, %s\n", REG8[reg], ea);
+        }
+      } else {
+        if (mod == 0b11) {
+          printf("cmp %s, %s\n", REG16[reg], REG16[rm]);
+        } else {
+          printf("cmp %s, %s\n", REG16[reg], ea);
+        }
+      }
+    } else {
+      if (!w) {
+        if (mod == 0b11) {
+          printf("cmp %s, %s\n", REG8[rm], REG8[reg]);
+        } else {
+          printf("cmp %s, %s\n", ea, REG8[reg]);
+        }
+      } else {
+        if (mod == 0b11) {
+          printf("cmp %s, %s\n", REG16[rm], REG16[reg]);
+        } else {
+          printf("cmp %s, %s\n", ea, REG16[reg]);
+        }
+      }
+    }
+
+    break;
+  }
+
+  if (!b2) {
+
   } else {
     printf("XOR: imm. to accumulator OR ???? (0x%02x)\n", LSB4);
   }
@@ -411,9 +459,9 @@ void f0x8(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
           print4b(p, a, il, ip);
 
           if (mod == 0b11) {
-            printf("add %s, %x\n", REG16[rm], *(uint16_t *)&p[a + 2]);
+            printf("add %s, %x\n", REG16[rm], *(uint16_t *)&p[a + 2]); //+3 ?
           } else {
-            printf("add %s, %x\n", ea, *(uint16_t *)&p[a + 2]);
+            printf("add %s, %x\n", ea, *(uint16_t *)&p[a + 2]); //+3 ?
           }
           break;
 
@@ -430,6 +478,56 @@ void f0x8(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
         }
         break;
 
+      case 0b011:
+        // SBB: imm <- r/m
+        mod = (p[a + 1] >> 6) & 0b11;
+        rm = p[a + 1] & 0b111;
+        get_adm(p, a + 2, mod, rm, ea, &ds);
+
+        p2 = LSB4 & 0b11;
+        switch (p2) { // sw
+        case 0b11:
+          il = 3 + ds;
+          print4b(p, a, il, ip);
+
+          if (mod == 0b11) {
+            printf("sbb %s, %x\n", REG16[rm], *(uint8_t *)&p[a + 3]);
+          } else {
+            printf("sbb %s, %x\n", ea, *(uint8_t *)&p[a + 3]);
+          }
+          break;
+
+        default:
+          printf("Unpatched case of SBB (0x%02x)\n", LSB4);
+          break;
+        }
+        break;
+
+      case 0b001:
+        // OR: imm <- r/m
+        // only need w here, no s
+        mod = (p[a + 1] >> 6) & 0b11;
+        rm = p[a + 1] & 0b111;
+        get_adm(p, a + 2, mod, rm, ea, &ds);
+
+        il = 3 + w + ds;
+        print4b(p, a, il, ip);
+
+        if (w) {
+          if (mod == 0b11) {
+            printf("or %s, %04x\n", REG16[rm], *(uint16_t *)&p[a + 2]);
+          } else {
+            printf("or %s, %04x\n", ea, *(uint16_t *)&p[a + 2]);
+          }
+        } else {
+          if (mod == 0b11) {
+            printf("or %s, %02x\n", REG8[rm], *(uint8_t *)&p[a + 2]);
+          } else {
+            printf("or %s, %02x\n", ea, *(uint8_t *)&p[a + 2]);
+          }
+        }
+        break;
+
       case 0b101:
         // SUB: imm <- r/m
         mod = (p[a + 1] >> 6) & 0b11;
@@ -439,19 +537,19 @@ void f0x8(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
         p2 = LSB4 & 0b11;
         switch (p2) { // sw
         case 0b01:
-          il = 4 + ds; // to recheck if mod != 11
+          il = 4 + ds;
           print4b(p, a, il, ip);
 
           if (mod == 0b11) {
-            printf("sub %s, %x\n", REG16[rm],
+            printf("sub %s, %04x\n", REG16[rm],
                    *(uint16_t *)&p[a + 2]); // to recheck
           } else {
-            printf("sub %s, %x\n", ea, *(uint16_t *)&p[a + 2]);
+            printf("sub %s, %04x\n", ea, *(uint16_t *)&p[a + 2]);
           }
           break;
 
         case 0b11:
-          il = 3 + ds; // to recheck if mod != 11
+          il = 3 + ds;
           print4b(p, a, il, ip);
 
           if (mod == 0b11) {
@@ -461,8 +559,8 @@ void f0x8(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
           }
           break;
 
-        default:       // to recheck
-          il = 2 + ds; // to recheck if mod != 11
+        default: // to recheck
+          il = 2 + ds;
           print4b(p, a, il, ip);
 
           if (mod == 0b11) {
@@ -483,19 +581,18 @@ void f0x8(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
         p2 = LSB4 & 0b11;
         switch (p2) { // sw
         case 0b00:
-          il = 3 + ds; // to recheck if mod != 11
+          il = 3 + ds;
           print4b(p, a, il, ip);
 
           if (mod == 0b11) {
             printf("cmp byte %s, %x\n", REG16[rm], *(uint8_t *)&p[a + 2]);
           } else {
-            printf("cmp byte %s, %x\n", ea, *(uint8_t *)&p[a + 2]);
+            printf("cmp byte %s, %x\n", ea, *(uint8_t *)&p[a + 2 + ds]);
           }
-          // BYTE flag to recheck
           break;
 
         case 0b01:
-          il = 4 + ds; // to recheck if mod != 11
+          il = 4 + ds;
           print4b(p, a, il, ip);
 
           if (mod == 0b11) {
@@ -507,18 +604,19 @@ void f0x8(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
           break;
 
         case 0b11:
-          il = 3 + ds; // to recheck if mod != 11
+          il = 3 + ds;
           print4b(p, a, il, ip);
 
           if (mod == 0b11) {
-            printf("cmp %s, %x\n", REG16[rm], *(uint8_t *)&p[a + ds + 1]);
+            // printf("HERE\n");
+            printf("cmp %s, %d\n", REG16[rm], (*(int8_t *)&p[a + 2])); // sus
           } else {
-            printf("cmp %s, %x\n", ea, *(uint8_t *)&p[a + ds + 2]);
+            printf("cmp %s, %x\n", ea, *(uint8_t *)&p[a + 2 + ds]);
           }
           break;
 
-        default:       // to recheck
-          il = 2 + ds; // to recheck if mod != 11
+        default: // to recheck
+          il = 2 + ds;
           print4b(p, a, il, ip);
 
           if (mod == 0b11) {
@@ -682,9 +780,9 @@ void f0xc(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
         print4b(p, a, il, ip);
 
         if (mod == 0b11) {
-          printf("mov %s, %02x\n", REG8[rm], p[a + 2]);
+          printf("mov byte %s, %02x\n", REG8[rm], p[a + 2]); // byte weird
         } else {
-          printf("mov %s, %02x\n", ea, p[a + 2]);
+          printf("mov byte %s, %02x\n", ea, p[a + 2]);
         }
       }
 
@@ -823,14 +921,14 @@ void f0xf(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
     switch (reg) {
     case 0b000:
       // TEST: imm -> r/m
-      il = 3 + w; //+ (disp ? 1 : 0); // to recheck
+      il = 3 + w + ds; //+ (disp ? 1 : 0); // to recheck
       print4b(p, a, il, ip);
 
       if (!w) {
         if (mod == 0b11)
           printf("test %s, %x\n", REG8[rm], p[a + 2]);
         else
-          printf("test %s, %x\n", ea, p[a + 2]);
+          printf("test byte %s, %x\n", ea, p[a + 3]); // to recheck byte
       } else {
         if (mod == 0b11)
           printf("test %s, %x\n", REG16[rm], *(uint16_t *)&p[a + 2]);
@@ -910,6 +1008,23 @@ void f0xf(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
     case 0xf:
       reg = (p[a + 1] >> 3) & 0b111;
       switch (reg) {
+
+      case 0b000:
+        // INC: r/m
+        w = LSB4 & 0b1;
+        mod = (p[a + 1] >> 6) & 0b11;
+        rm = p[a + 1] & 0b111;
+        get_adm(p, a + 2, mod, rm, ea, &ds);
+
+        il = 2 + ds;
+        print4b(p, a, il, ip);
+
+        if (mod == 0b11)
+          printf("inc %s\n", REG16[rm]);
+        else
+          printf("inc %s\n", ea); // not sure, to recheck
+        break;
+
       case 0b010:
         // CALL: indseg
         mod = (p[a + 1] >> 6) & 0b11;
