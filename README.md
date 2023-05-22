@@ -147,8 +147,8 @@ To execute the program, the following syntax should be used:
 The following commands are examples of how to use the program:
 
 ```bash
-./disassembler -d ./test/execs/1a_c.out
-./disassembler ./test/execs/1a_c.out
+./disassembler -d ./test/execs/1c
+./disassembler ./test/execs/1c
 ```
 
 The executable file located in `./test/utest` folder after compiling the poject with make can be used as a unit tests for the disassembler on the provided test files in `./test/execs`. To use it, you need to run the following command:
