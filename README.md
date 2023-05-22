@@ -48,21 +48,21 @@ No external librairies are necessary except the following C headers:
 Confer to [documentation](./doc/iAPX86.pdf) for more details on instructions & addressing modes.
 
 **Legend:**
--> = to
-<- = from
-<-> = either
-\+ = with
-& = and
-r/m = Register/Memory
-reg = Register
-acc = Accumulator
-imm = Immediate
-EA = Effective Address
-w| = within
-dir = Direct
-indir = Indirect
-addimm = Adding Immediate
-(un)spec = (Un)Specified
+- -> = to
+- <- = from
+- <-> = either
+- \+ = with
+- & = and
+- r/m = Register/Memory
+- reg = Register
+- acc = Accumulator
+- imm = Immediate
+- EA = Effective Address
+- w| = within
+- dir = Direct
+- indir = Indirect
+- addimm = Adding Immediate
+- (un)spec = (Un)Specified
 
 ### DATA TRANSFER:
 
