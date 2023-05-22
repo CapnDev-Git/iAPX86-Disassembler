@@ -49,44 +49,71 @@ Confer to [documentation](./doc/iAPX86.pdf) for more details on instructions & a
 
 **DATA TRANSFER:**
 
-- MOV: r/m <-> reg, imm -> reg
+- MOV: r/m <-> reg, imm -> r/m, imm -> reg
 - PUSH: r/m, reg
 - POP: reg
-- IN: fixed port, variable port
+- XCHG: r/m + reg, reg + acc
+- IN: fixed/variable port
 - LEA: EA -> reg
 
 **ARITHMETIC:**
 
 - ADD: r/m + reg <->, imm -> r/m
-- SUB: imm <- r/m
-- SSB: r/m & reg <->
-- DEC: reg
+- ADC: r/m + reg <->
+- INC: r/m, reg
+- SUB: r/m & reg <->, imm <- r/m, imm <- acc
+- SSB: r/m & reg <->, imm <- r/m
+- DEC: r/m, reg
 - NEG
-- CMP: imm + r/m
+- CMP: r/m & reg, imm + r/m, imm + acc
+- MUL
+- DIV
+- CBW
+- CWD
 
 **LOGIC:**
 
 - NOT
 - SHL/SAL
-- AND: r/m & reg <->
-- TEST: imm & r/m
-- OR: r/m & reg <->
+- SHR
+- SAR
+- RCL
+- AND: r/m & reg <->, imm -> r/m
+- TEST: r/m & reg, imm & r/m, imm & acc
+- OR: r/m & reg <->, imm -> r/m
 - XOR: r/m & reg <->
+
+**STRING MANIPULATION:**
+
+- REP
+- MOVS
+- CMPS
+- SCAS
+- LODS
+- STOS
 
 **CONTROL TRANSFER:**
 
 - CALL: dirw|seg, indirw|seg
-- JMP: dirw|seg, dirw|seg-short
-- RET: w|seg
+- JMP: dirw|seg, dirw|seg-short, indirw|seg
+- RET: w|seg, w|seg addimm -> SP
 - JE/JZ
 - JL/JNGE
+- JLE/JNG
+- JB/JNAE
+- JBE/JNA
 - JNE/JNZ
 - JNL/JGE
+- JNLE/JG
 - JNB/JAE
+- JNBE/JA
+- LOOP
 - INT: spec, 3
 
 **PROCESSOR CONTROL:**
 
+- CLD
+- STD
 - HLT
 
 ## How to use
@@ -120,8 +147,8 @@ To execute the program, the following syntax should be used:
 The following commands are examples of how to use the program:
 
 ```bash
-./disassembler -d ./test/execs/1a_c
-./disassembler ./test/execs/1a_c
+./disassembler -d ./test/execs/1a_c.out
+./disassembler ./test/execs/1a_c.out
 ```
 
 The executable file located in `./test/utest` folder after compiling the poject with make can be used as a unit tests for the disassembler on the provided test files in `./test/execs`. To use it, you need to run the following command:
