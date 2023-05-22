@@ -7,6 +7,12 @@
   - [Compilation Librairies](#compilation-librairies)
   - [C Librairies](#c-librairies)
 - [Supported instructions](#supported-instructions)
+  - [DATA TRANSFER:](#data-transfer)
+  - [ARITHMETIC:](#arithmetic)
+  - [LOGIC:](#logic)
+  - [STRING MANIPULATION:](#string-manipulation)
+  - [CONTROL TRANSFER:](#control-transfer)
+  - [PROCESSOR CONTROL:](#processor-control)
 - [How to use](#how-to-use)
   - [Compilation](#compilation-1)
   - [Execution](#execution)
@@ -48,6 +54,7 @@ No external librairies are necessary except the following C headers:
 Confer to [documentation](./doc/iAPX86.pdf) for more details on instructions & addressing modes.
 
 **Legend:**
+
 - -> = to
 - <- = from
 - <-> = either
