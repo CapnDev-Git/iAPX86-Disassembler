@@ -7,12 +7,12 @@
   - [Compilation Librairies](#compilation-librairies)
   - [C Librairies](#c-librairies)
 - [Supported instructions](#supported-instructions)
-  - [DATA TRANSFER:](#data-transfer)
-  - [ARITHMETIC:](#arithmetic)
-  - [LOGIC:](#logic)
-  - [STRING MANIPULATION:](#string-manipulation)
-  - [CONTROL TRANSFER:](#control-transfer)
-  - [PROCESSOR CONTROL:](#processor-control)
+  - [DATA TRANSFER](#data-transfer)
+  - [ARITHMETIC](#arithmetic)
+  - [LOGIC](#logic)
+  - [STRING MANIPULATION](#string-manipulation)
+  - [CONTROL TRANSFER](#control-transfer)
+  - [PROCESSOR CONTROL](#processor-control)
 - [How to use](#how-to-use)
   - [Compilation](#compilation-1)
   - [Execution](#execution)
@@ -53,7 +53,7 @@ No external librairies are necessary except the following C headers:
 
 Confer to [documentation](./doc/iAPX86.pdf) for more details on instructions & addressing modes.
 
-**Legend:**
+**Legend**
 
 - -> = to
 - <- = from
@@ -71,7 +71,7 @@ Confer to [documentation](./doc/iAPX86.pdf) for more details on instructions & a
 - addimm = Adding Immediate
 - (un)spec = (Un)Specified
 
-### DATA TRANSFER:
+### DATA TRANSFER
 
 - MOV: r/m <-> reg, imm -> r/m, imm -> reg
 - PUSH: r/m, reg
@@ -80,7 +80,7 @@ Confer to [documentation](./doc/iAPX86.pdf) for more details on instructions & a
 - IN: fixed/variable port
 - LEA: EA -> reg
 
-### ARITHMETIC:
+### ARITHMETIC
 
 - ADD: r/m + reg <->, imm -> r/m
 - ADC: r/m + reg <->
@@ -95,7 +95,7 @@ Confer to [documentation](./doc/iAPX86.pdf) for more details on instructions & a
 - CBW
 - CWD
 
-### LOGIC:
+### LOGIC
 
 - NOT
 - SHL/SAL
@@ -107,7 +107,7 @@ Confer to [documentation](./doc/iAPX86.pdf) for more details on instructions & a
 - OR: r/m & reg <->, imm -> r/m
 - XOR: r/m & reg <->
 
-### STRING MANIPULATION:
+### STRING MANIPULATION
 
 - REP
 - MOVS
@@ -116,7 +116,7 @@ Confer to [documentation](./doc/iAPX86.pdf) for more details on instructions & a
 - LODS
 - STOS
 
-### CONTROL TRANSFER:
+### CONTROL TRANSFER
 
 - CALL: dirw|seg, indirw|seg
 - JMP: dirw|seg, dirw|seg-short, indirw|seg
@@ -134,7 +134,7 @@ Confer to [documentation](./doc/iAPX86.pdf) for more details on instructions & a
 - LOOP
 - INT: spec, 3
 
-### PROCESSOR CONTROL:
+### PROCESSOR CONTROL
 
 - CLD
 - STD
