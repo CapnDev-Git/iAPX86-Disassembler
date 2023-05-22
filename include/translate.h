@@ -10,7 +10,7 @@
 #include "patterns.h"
 #include "prints.h"
 
-#define EA_STRING_SIZE 20 // Chosen arbitrarily
+#define EA_STRING_SIZE 32 // Chosen arbitrarily
 
 void get_adm(const unsigned char *p, size_t a, unsigned char mod,
              unsigned char rm, char *ea, size_t *ds);
