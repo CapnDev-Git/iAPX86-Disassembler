@@ -67,6 +67,7 @@ void get_adm(const unsigned char *p, size_t a, unsigned char mod,
 }
 
 void translate_bin(const unsigned char *p, size_t p_size) {
+  const char *SEGREG[4] = {"es", "cs", "ss", "ds"};
   unsigned char op;
   size_t a = 0, ip = 0, pip = ip;
 
@@ -86,11 +87,27 @@ void translate_bin(const unsigned char *p, size_t p_size) {
       }
     }
 
+    // Catch segment override prefix
+    if ((op >> 1) == 0b000 && ((p[a] >> 1) & 0b11) == 0b11) {
+      print4b(p, a, 1, &ip);
+
+      if (p[a] == 0x0f)
+        printf("(undefined)\n");
+      else {
+        if (p[a] & 0b1)
+          printf("pop %s\n", SEGREG[(p[a] >> 3) & 0b11]);
+        else
+          printf("push %s\n", SEGREG[(p[a] >> 3) & 0b11]);
+      }
+      a++;
+      continue;
+    }
+
     opcodes[op](p, a, p[a] & 0b1111, &ip);
 
     if (pip == ip) {
-      printf("(undefined) %02x\n", p[a]);
-      ip++;
+      print4b(p, a, 1, &ip);
+      printf("(undefined)\n");
     }
     a = pip = ip;
   }

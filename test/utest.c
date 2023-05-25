@@ -82,7 +82,7 @@ void cmp_files_dir(const char *directory, int verbose) {
   while ((entry = readdir(dir)) != NULL) {
     if (entry->d_type == DT_REG) { // Check if it's a regular file
       char filepath[MAX_LENGTH];
-      snprintf(filepath, sizeof(filepath), "%s/%s", directory, entry->d_name);
+      snprintf(filepath, sizeof(filepath), "%s%s", directory, entry->d_name);
       cmp_files(filepath, verbose);
     }
   }

@@ -23,36 +23,49 @@ void f0x0(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
     rm = p[a + 1] & 0b111;
     get_adm(p, a + 2, mod, rm, ea, &ds);
 
-    il = 2 + ds;
-    print4b(p, a, il, ip);
+    b2 = (LSB4 >> 2) & 0b1;
+    if (!b2) {
+      il = 2 + ds;
+      print4b(p, a, il, ip);
 
-    if (d) {
-      if (!w) {
-        if (mod == 0b11) {
-          printf("or %s, %s\n", REG8[reg], REG8[rm]);
+      if (d) {
+        if (!w) {
+          if (mod == 0b11) {
+            printf("or %s, %s\n", REG8[reg], REG8[rm]);
+          } else {
+            printf("or %s, %s\n", REG8[reg], ea);
+          }
         } else {
-          printf("or %s, %s\n", REG8[reg], ea);
+          if (mod == 0b11) {
+            printf("or %s, %s\n", REG16[reg], REG16[rm]);
+          } else {
+            printf("or %s, %s\n", REG16[reg], ea);
+          }
         }
       } else {
-        if (mod == 0b11) {
-          printf("or %s, %s\n", REG16[reg], REG16[rm]);
+        if (!w) {
+          if (mod == 0b11) {
+            printf("or %s, %s\n", REG8[rm], REG8[reg]);
+          } else {
+            printf("or %s, %s\n", ea, REG8[reg]);
+          }
         } else {
-          printf("or %s, %s\n", REG16[reg], ea);
+          if (mod == 0b11) {
+            printf("or %s, %s\n", REG16[rm], REG16[reg]);
+          } else {
+            printf("or %s, %s\n", ea, REG16[reg]);
+          }
         }
       }
     } else {
+      // OR: imm -> acc
+      il = 2 + w;
+      print4b(p, a, il, ip);
+
       if (!w) {
-        if (mod == 0b11) {
-          printf("or %s, %s\n", REG8[rm], REG8[reg]);
-        } else {
-          printf("or %s, %s\n", ea, REG8[reg]);
-        }
+        printf("or al, %x\n", p[a + 1]);
       } else {
-        if (mod == 0b11) {
-          printf("or %s, %s\n", REG16[rm], REG16[reg]);
-        } else {
-          printf("or %s, %s\n", ea, REG16[reg]);
-        }
+        printf("or ax, %04x\n", p[a + 1] + (p[a + 2] << 8));
       }
     }
   } else {
@@ -99,7 +112,16 @@ void f0x0(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
         }
       }
     } else {
-      printf("ADD: imm. to accumulator OR ???? (0x%02x)\n", LSB4);
+      // ADD: imm -> acc
+      w = LSB4 & 0b1;
+      il = 2 + w;
+      print4b(p, a, il, ip);
+
+      if (!w) {
+        printf("add al, %x\n", p[a + 1]);
+      } else {
+        printf("add ax, %04x\n", p[a + 1] + (p[a + 2] << 8));
+      }
     }
   }
 
@@ -109,19 +131,19 @@ void f0x0(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
 void f0x1(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
   char *ea = malloc(EA_STRING_SIZE * sizeof(unsigned char));
 
-  d = (LSB4 >> 1) & 0b1;
-  w = LSB4 & 0b1;
-  mod = (p[a + 1] >> 6) & 0b11;
-  reg = (p[a + 1] >> 3) & 0b111;
-  rm = p[a + 1] & 0b111;
-  get_adm(p, a + 2, mod, rm, ea, &ds);
-
-  il = 2 + ds;
-  print4b(p, a, il, ip);
-
   p2 = (LSB4 >> 2) & 0b11;
   switch (p2) {
   case 0b00:
+    d = (LSB4 >> 1) & 0b1;
+    w = LSB4 & 0b1;
+    mod = (p[a + 1] >> 6) & 0b11;
+    reg = (p[a + 1] >> 3) & 0b111;
+    rm = p[a + 1] & 0b111;
+    get_adm(p, a + 2, mod, rm, ea, &ds);
+
+    il = 2 + ds;
+    print4b(p, a, il, ip);
+
     // ADC: r/m & reg <->
     if (d) {
       if (!w) {
@@ -154,7 +176,33 @@ void f0x1(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
     }
     break;
 
+  case 0b01:
+    b1 = (LSB4 >> 1) & 0b1;
+    if (!b1) {
+      // ADC: imm -> acc
+      w = LSB4 & 0b1;
+      il = 2 + w;
+      print4b(p, a, il, ip);
+
+      if (!w) {
+        printf("adc al, %02x\n", p[a + 1]);
+      } else {
+        printf("adc ax, %04x\n", p[a + 1] + (p[a + 2] << 8));
+      }
+    }
+    break;
+
   case 0b10:
+    d = (LSB4 >> 1) & 0b1;
+    w = LSB4 & 0b1;
+    mod = (p[a + 1] >> 6) & 0b11;
+    reg = (p[a + 1] >> 3) & 0b111;
+    rm = p[a + 1] & 0b111;
+    get_adm(p, a + 2, mod, rm, ea, &ds);
+
+    il = 2 + ds;
+    print4b(p, a, il, ip);
+
     // SBB: r/m & reg <->
     if (d) {
       if (!w) {
@@ -186,6 +234,20 @@ void f0x1(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
       }
     }
     break;
+
+  case 0b11:
+    // SBB: imm <- acc
+    w = LSB4 & 0b1;
+    il = 2 + w;
+    print4b(p, a, il, ip);
+
+    if (!w) {
+      printf("sbb al, %02x\n", p[a + 1]);
+    } else {
+      printf("sbb ax, %04x\n", p[a + 1] + (p[a + 2] << 8));
+    }
+
+    break;
   }
 
   free(ea);
@@ -194,106 +256,134 @@ void f0x1(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
 void f0x2(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
   char *ea = malloc(EA_STRING_SIZE * sizeof(unsigned char));
 
-  p2 = (LSB4 >> 2) & 0b11;
-  switch (p2) {
-  case 0b00:
-    // AND: r/m & reg <->
-    d = (LSB4 >> 1) & 0b1;
-    w = LSB4 & 0b1;
-    mod = (p[a + 1] >> 6) & 0b11;
-    reg = (p[a + 1] >> 3) & 0b111;
-    rm = p[a + 1] & 0b111;
-    get_adm(p, a + 2, mod, rm, ea, &ds);
-
-    il = 2 + ds;
-    print4b(p, a, il, ip);
-
-    if (d) {
-      if (!w) {
-        if (mod == 0b11) {
-          printf("and %s, %s\n", REG8[reg], REG8[rm]);
-        } else {
-          printf("and %s, %s\n", REG8[reg], ea);
-        }
-      } else {
-        if (mod == 0b11) {
-          printf("and %s, %s\n", REG16[reg], REG16[rm]);
-        } else {
-          printf("and %s, %s\n", REG16[reg], ea);
-        }
-      }
-    } else {
-      if (!w) {
-        if (mod == 0b11) {
-          printf("and %s, %s\n", REG8[rm], REG8[reg]);
-        } else {
-          printf("and %s, %s\n", ea, REG8[reg]);
-        }
-      } else {
-        if (mod == 0b11) {
-          printf("and %s, %s\n", REG16[rm], REG16[reg]);
-        } else {
-          printf("and %s, %s\n", ea, REG16[reg]);
-        }
-      }
-    }
+  p4 = LSB4 & 0b1111;
+  switch (p4) {
+  case 0xf:
+    // DAS
+    print4b(p, a, 1, ip);
+    printf("das\n");
     break;
 
-  case 0b10:
-    // SUB: r/m & reg <->
-    d = (LSB4 >> 1) & 0b1;
-    w = LSB4 & 0b1;
-    mod = (p[a + 1] >> 6) & 0b11;
-    reg = (p[a + 1] >> 3) & 0b111;
-    rm = p[a + 1] & 0b111;
-    get_adm(p, a + 2, mod, rm, ea, &ds);
+  default:
+    p2 = (LSB4 >> 2) & 0b11;
+    switch (p2) {
+    case 0b00:
+      // AND: r/m & reg <->
+      d = (LSB4 >> 1) & 0b1;
+      w = LSB4 & 0b1;
+      mod = (p[a + 1] >> 6) & 0b11;
+      reg = (p[a + 1] >> 3) & 0b111;
+      rm = p[a + 1] & 0b111;
+      get_adm(p, a + 2, mod, rm, ea, &ds);
 
-    il = 2 + ds;
-    print4b(p, a, il, ip);
+      il = 2 + ds;
+      print4b(p, a, il, ip);
 
-    if (d) {
-      if (!w) {
-        if (mod == 0b11) {
-          printf("sub %s, %s\n", REG8[reg], REG8[rm]);
+      if (d) {
+        if (!w) {
+          if (mod == 0b11) {
+            printf("and %s, %s\n", REG8[reg], REG8[rm]);
+          } else {
+            printf("and %s, %s\n", REG8[reg], ea);
+          }
         } else {
-          printf("sub %s, %s\n", REG8[reg], ea);
+          if (mod == 0b11) {
+            printf("and %s, %s\n", REG16[reg], REG16[rm]);
+          } else {
+            printf("and %s, %s\n", REG16[reg], ea);
+          }
         }
       } else {
-        if (mod == 0b11) {
-          printf("sub %s, %s\n", REG16[reg], REG16[rm]);
+        if (!w) {
+          if (mod == 0b11) {
+            printf("and %s, %s\n", REG8[rm], REG8[reg]);
+          } else {
+            printf("and %s, %s\n", ea, REG8[reg]);
+          }
         } else {
-          printf("sub %s, %s\n", REG16[reg], ea);
+          if (mod == 0b11) {
+            printf("and %s, %s\n", REG16[rm], REG16[reg]);
+          } else {
+            printf("and %s, %s\n", ea, REG16[reg]);
+          }
         }
       }
-    } else {
-      if (!w) {
-        if (mod == 0b11) {
-          printf("sub %s, %s\n", REG8[rm], REG8[reg]);
+      break;
+
+    case 0b01:
+      b1 = (LSB4 >> 1) & 0b1;
+      if (!b1) {
+        // AND: imm -> acc
+        w = LSB4 & 0b1;
+        il = 2 + w;
+        print4b(p, a, il, ip);
+
+        if (!w) {
+          printf("and al, %02x\n", p[a + 1]);
         } else {
-          printf("sub %s, %s\n", ea, REG8[reg]);
+          printf("and ax, %04x\n", p[a + 1] + (p[a + 2] << 8));
+        }
+      }
+      break;
+
+    case 0b10:
+      // SUB: r/m & reg <->
+      d = (LSB4 >> 1) & 0b1;
+      w = LSB4 & 0b1;
+      mod = (p[a + 1] >> 6) & 0b11;
+      reg = (p[a + 1] >> 3) & 0b111;
+      rm = p[a + 1] & 0b111;
+      get_adm(p, a + 2, mod, rm, ea, &ds);
+
+      il = 2 + ds;
+      print4b(p, a, il, ip);
+
+      if (d) {
+        if (!w) {
+          if (mod == 0b11) {
+            printf("sub %s, %s\n", REG8[reg], REG8[rm]);
+          } else {
+            printf("sub %s, %s\n", REG8[reg], ea);
+          }
+        } else {
+          if (mod == 0b11) {
+            printf("sub %s, %s\n", REG16[reg], REG16[rm]);
+          } else {
+            printf("sub %s, %s\n", REG16[reg], ea);
+          }
         }
       } else {
-        if (mod == 0b11) {
-          printf("sub %s, %s\n", REG16[rm], REG16[reg]);
+        if (!w) {
+          if (mod == 0b11) {
+            printf("sub %s, %s\n", REG8[rm], REG8[reg]);
+          } else {
+            printf("sub %s, %s\n", ea, REG8[reg]);
+          }
         } else {
-          printf("sub %s, %s\n", ea, REG16[reg]);
+          if (mod == 0b11) {
+            printf("sub %s, %s\n", REG16[rm], REG16[reg]);
+          } else {
+            printf("sub %s, %s\n", ea, REG16[reg]);
+          }
         }
       }
+      break;
+
+    case 0b11:
+      // SUB: imm. <- acc
+      w = LSB4 & 0b1;
+
+      il = 2 + w;
+      print4b(p, a, il, ip);
+
+      if (!w) {
+        printf("sub al, %02x\n", p[a + 1]);
+      } else {
+        printf("sub ax, %04x\n", *(uint16_t *)(p + a + 1));
+      }
+      break;
     }
-    break;
 
-  case 0b11:
-    // SUB: imm. <- acc
-    w = LSB4 & 0b1;
-
-    il = 2 + w;
-    print4b(p, a, il, ip);
-
-    if (!w) {
-      printf("sub al, %02x\n", p[a + 1]);
-    } else {
-      printf("sub ax, %04x\n", *(uint16_t *)(p + a + 1));
-    }
     break;
   }
 
@@ -303,108 +393,132 @@ void f0x2(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
 void f0x3(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
   char *ea = malloc(EA_STRING_SIZE * sizeof(unsigned char));
 
-  p2 = (LSB4 >> 2) & 0b11;
-  switch (p2) {
-  case 0b00:
-    // XOR: r/m & reg <->
-    d = (LSB4 >> 1) & 0b1;
-    w = LSB4 & 0b1;
-    mod = (p[a + 1] >> 6) & 0b11;
-    reg = (p[a + 1] >> 3) & 0b111;
-    rm = p[a + 1] & 0b111;
-    get_adm(p, a + 2, mod, rm, ea, &ds);
-
-    il = 2;
-    print4b(p, a, il, ip);
-
-    if (d) {
-      if (!w) {
-        if (mod == 0b11) {
-          printf("xor %s, %s\n", REG8[reg], REG8[rm]);
-        } else {
-          printf("xor %s, %s\n", REG8[reg], ea);
-        }
-      } else {
-        if (mod == 0b11) {
-          printf("xor %s, %s\n", REG16[reg], REG16[rm]);
-        } else {
-          printf("xor %s, %s\n", REG16[reg], ea);
-        }
-      }
-    } else {
-      if (!w) {
-        if (mod == 0b11) {
-          printf("xor %s, %s\n", REG8[rm], REG8[reg]);
-        } else {
-          printf("xor %s, %s\n", REG8[rm], ea);
-        }
-      } else {
-        if (mod == 0b11) {
-          printf("xor %s, %s\n", REG16[rm], REG16[reg]);
-        } else {
-          printf("xor %s, %s\n", REG16[rm], ea);
-        }
-      }
-    }
+  p4 = LSB4 & 0b1111;
+  switch (p4) {
+  case 0xf:
+    // AAS
+    print4b(p, a, 1, ip);
+    printf("aas\n");
     break;
 
-  case 0b10:
-    // CMP: r/m & reg
-    d = (LSB4 >> 1) & 0b1;
-    w = LSB4 & 0b1;
-    mod = (p[a + 1] >> 6) & 0b11;
-    reg = (p[a + 1] >> 3) & 0b111;
-    rm = p[a + 1] & 0b111;
-    get_adm(p, a + 2, mod, rm, ea, &ds);
+  default:
+    p2 = (LSB4 >> 2) & 0b11;
+    switch (p2) {
+    case 0b00:
+      // XOR: r/m & reg <->
+      d = (LSB4 >> 1) & 0b1;
+      w = LSB4 & 0b1;
+      mod = (p[a + 1] >> 6) & 0b11;
+      reg = (p[a + 1] >> 3) & 0b111;
+      rm = p[a + 1] & 0b111;
+      get_adm(p, a + 2, mod, rm, ea, &ds);
 
-    il = 2 + ds;
-    print4b(p, a, il, ip);
+      il = 2;
+      print4b(p, a, il, ip);
 
-    if (d) {
-      if (!w) {
-        if (mod == 0b11) {
-          printf("cmp %s, %s\n", REG8[reg], REG8[rm]);
+      if (d) {
+        if (!w) {
+          if (mod == 0b11) {
+            printf("xor %s, %s\n", REG8[reg], REG8[rm]);
+          } else {
+            printf("xor %s, %s\n", REG8[reg], ea);
+          }
         } else {
-          printf("cmp %s, %s\n", REG8[reg], ea);
+          if (mod == 0b11) {
+            printf("xor %s, %s\n", REG16[reg], REG16[rm]);
+          } else {
+            printf("xor %s, %s\n", REG16[reg], ea);
+          }
         }
       } else {
-        if (mod == 0b11) {
-          printf("cmp %s, %s\n", REG16[reg], REG16[rm]);
+        if (!w) {
+          if (mod == 0b11) {
+            printf("xor %s, %s\n", REG8[rm], REG8[reg]);
+          } else {
+            printf("xor %s, %s\n", ea, REG8[reg]);
+          }
         } else {
-          printf("cmp %s, %s\n", REG16[reg], ea);
+          if (mod == 0b11) {
+            printf("xor %s, %s\n", REG16[rm], REG16[reg]);
+          } else {
+            printf("xor %s, %s\n", ea, REG16[reg]);
+          }
         }
       }
-    } else {
+      break;
+
+    case 0b01:
+      // XOR: imm -> acc
+      w = LSB4 & 0b1;
+      il = 2 + w;
+      print4b(p, a, il, ip);
+
       if (!w) {
-        if (mod == 0b11) {
-          printf("cmp %s, %s\n", REG8[rm], REG8[reg]);
+        printf("xor al, %02x\n", p[a + 1]);
+      } else {
+        printf("xor ax, %04x\n", *(uint16_t *)(p + a + 1));
+      }
+      break;
+
+    case 0b10:
+      // CMP: r/m & reg
+      d = (LSB4 >> 1) & 0b1;
+      w = LSB4 & 0b1;
+      mod = (p[a + 1] >> 6) & 0b11;
+      reg = (p[a + 1] >> 3) & 0b111;
+      rm = p[a + 1] & 0b111;
+      get_adm(p, a + 2, mod, rm, ea, &ds);
+
+      il = 2 + ds;
+      print4b(p, a, il, ip);
+
+      if (d) {
+        if (!w) {
+          if (mod == 0b11) {
+            printf("cmp %s, %s\n", REG8[reg], REG8[rm]);
+          } else {
+            printf("cmp %s, %s\n", REG8[reg], ea);
+          }
         } else {
-          printf("cmp %s, %s\n", ea, REG8[reg]);
+          if (mod == 0b11) {
+            printf("cmp %s, %s\n", REG16[reg], REG16[rm]);
+          } else {
+            printf("cmp %s, %s\n", REG16[reg], ea);
+          }
         }
       } else {
-        if (mod == 0b11) {
-          printf("cmp %s, %s\n", REG16[rm], REG16[reg]);
+        if (!w) {
+          if (mod == 0b11) {
+            printf("cmp %s, %s\n", REG8[rm], REG8[reg]);
+          } else {
+            printf("cmp %s, %s\n", ea, REG8[reg]);
+          }
         } else {
-          printf("cmp %s, %s\n", ea, REG16[reg]);
+          if (mod == 0b11) {
+            printf("cmp %s, %s\n", REG16[rm], REG16[reg]);
+          } else {
+            printf("cmp %s, %s\n", ea, REG16[reg]);
+          }
         }
       }
+
+      break;
+
+    case 0b11:
+      // CMP: imm. + acc
+      w = LSB4 & 0b1;
+
+      il = 2 + w;
+      print4b(p, a, il, ip);
+
+      if (!w) {
+        printf("cmp al, %x\n", p[a + 1]);
+      } else {
+        printf("cmp ax, %04x\n", *(uint16_t *)(p + a + 1));
+      }
+
+      break;
     }
-
-    break;
-
-  case 0b11:
-    // CMP: imm. + acc
-    w = LSB4 & 0b1;
-
-    il = 2 + w;
-    print4b(p, a, il, ip);
-
-    if (!w) {
-      printf("cmp al, %02x\n", p[a + 1]);
-    } else {
-      printf("cmp ax, %04x\n", *(uint16_t *)(p + a + 1));
-    }
-
     break;
   }
 
@@ -457,8 +571,8 @@ void f0x5(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
 void f0x6(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
   char *ea = malloc(EA_STRING_SIZE * sizeof(unsigned char));
 
-  *ip++; // TODO, remove this
-  printf("UNMATCHED: 0x6%01x\n", LSB4);
+  print4b(p, a, 1, ip);
+  printf("(undefined)\n");
 
   free(ea);
 }
@@ -466,11 +580,23 @@ void f0x6(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
 void f0x7(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
   char *ea = malloc(EA_STRING_SIZE * sizeof(unsigned char));
 
-  il = 2;
-  print4b(p, a, il, ip);
-
   p4 = LSB4 & 0b1111;
+
+  il = 2;
+  if (p4 != 0x9 && p4 != 0xa)
+    print4b(p, a, il, ip);
+
   switch (p4) {
+  case 0x0:
+    // JO
+    printf("jo");
+    break;
+
+  case 0x1:
+    // JNO
+    printf("jno");
+    break;
+
   case 0x2:
     // JB/JNEA
     printf("jb");
@@ -501,6 +627,28 @@ void f0x7(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
     printf("jnbe");
     break;
 
+  case 0x8:
+    // JS
+    printf("js");
+    break;
+
+  case 0x9:
+    // JNS
+    print4b(p, a, 1, ip);
+    printf("(undefined)\n");
+    return;
+
+  case 0xa:
+    // JP/JPE
+    print4b(p, a, 1, ip);
+    printf("(undefined)\n");
+    return;
+
+  case 0xb:
+    // JNP/JPO
+    printf("jnp");
+    break;
+
   case 0xc:
     // JL/JNGE
     printf("jl");
@@ -522,7 +670,7 @@ void f0x7(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
     break;
 
   default:
-    printf("Unpatched case of JUMPs (0x%02x)\n", LSB4);
+    printf("unmatched case of conditional jumps\n");
     break;
   }
 
@@ -535,8 +683,9 @@ void f0x8(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
   char *ea = malloc(EA_STRING_SIZE * sizeof(unsigned char));
 
   p4 = LSB4 & 0b1111;
-  if (p4 == 0xd) {
-    // - LEA: reg <- EA
+  switch (p4) {
+  case 0xd:
+    // LEA: reg <- EA
     mod = (p[a + 1] >> 6) & 0b11;
     reg = (p[a + 1] >> 3) & 0b111;
     rm = p[a + 1] & 0b111;
@@ -544,9 +693,16 @@ void f0x8(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
 
     il = 2 + ds;
     print4b(p, a, il, ip);
-
     printf("lea %s, %s\n", REG16[reg], ea);
-  } else {
+    break;
+
+  case 0xf:
+    // POP: r/m -- NOT MATCHED BY REF
+    *ip += 2;
+    printf("0x8f is not implemented\n");
+    break;
+
+  default:
     p2 = (LSB4 >> 2) & 0b11;
     switch (p2) {
     case 0b00:
@@ -568,9 +724,9 @@ void f0x8(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
           print4b(p, a, il, ip);
 
           if (mod == 0b11) {
-            printf("add %s, %04x\n", REG16[rm], *(uint16_t *)&p[a + 2]); //+3 ?
+            printf("add %s, %04x\n", REG16[rm], *(uint16_t *)&p[a + 2 + ds]);
           } else {
-            printf("add %s, %x\n", ea, *(uint16_t *)&p[a + 2]); //+3 ?
+            printf("add %s, %04x\n", ea, *(uint16_t *)&p[a + 2 + ds]);
           }
           break;
 
@@ -578,11 +734,9 @@ void f0x8(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
           il = 3 + ds;
           print4b(p, a, il, ip);
 
-          if (mod == 0b11) {
-            printf("add %s, %x\n", REG16[rm], *(uint8_t *)&p[a + 2]);
-          } else {
-            printf("add %s, %x\n", ea, *(uint8_t *)&p[a + 2 + ds]);
-          }
+          int8_t imm8 = *(int8_t *)&p[a + 2 + ds];
+          printf("add %s, %s%x\n", mod == 0b11 ? REG16[rm] : ea,
+                 imm8 < 0 ? "-" : "", imm8 < 0 ? -imm8 : imm8);
           break;
 
         default: // sw = 0b00, 0b10, 0b11
@@ -623,6 +777,55 @@ void f0x8(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
         }
         break;
 
+      case 0b010:
+        // ADC: imm -> r/m
+        mod = (p[a + 1] >> 6) & 0b11;
+        rm = p[a + 1] & 0b111;
+        get_adm(p, a + 2, mod, rm, ea, &ds);
+
+        p2 = LSB4 & 0b11;
+        switch (p2) { // sw
+        case 0b01:
+          il = 4 + ds;
+          print4b(p, a, il, ip);
+
+          if (mod == 0b11) {
+            printf("adc %s, %04x\n", REG16[rm], *(uint16_t *)&p[a + 2]);
+          } else {
+            printf("adc %s, %04x\n", ea, *(uint16_t *)&p[a + 2]);
+          }
+          break;
+
+        case 0b10:
+          il = 3 + ds;
+          print4b(p, a, il, ip);
+
+          if (mod == 0b11) {
+            printf("adc %s, %02x\n", REG8[rm], *(uint8_t *)&p[a + 2]);
+          } else {
+            printf("adc %s, %02x\n", ea, *(uint8_t *)&p[a + 2]);
+          }
+          break;
+
+        case 0b11:
+          il = 3 + ds;
+          print4b(p, a, il, ip);
+
+          if (mod == 0b11) {
+            printf("adc %s, %x\n", REG16[rm], *(uint8_t *)&p[a + 2 + ds]);
+          } else {
+            printf("adc %s, %x\n", ea, *(uint8_t *)&p[a + 2 + ds]);
+          }
+
+          break;
+
+        default:
+          printf("Unpatched case of ADC\n");
+          break;
+        }
+
+        break;
+
       case 0b011:
         // SBB: imm <- r/m
         mod = (p[a + 1] >> 6) & 0b11;
@@ -631,19 +834,37 @@ void f0x8(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
 
         p2 = LSB4 & 0b11;
         switch (p2) { // sw
+        case 0b01:
+          il = 4 + ds;
+          print4b(p, a, il, ip);
+
+          if (mod == 0b11) {
+            printf("sbb %s, %04x\n", REG16[rm], *(uint16_t *)&p[a + 2]);
+          } else {
+            printf("sbb %s, %04x\n", ea, *(uint16_t *)&p[a + 2]);
+          }
+          break;
+
         case 0b11:
           il = 3 + ds;
           print4b(p, a, il, ip);
 
           if (mod == 0b11) {
-            printf("sbb %s, %x\n", REG16[rm], *(uint8_t *)&p[a + 3]);
+            printf("sbb %s, %x\n", REG16[rm], *(uint8_t *)&p[a + 2 + ds]);
           } else {
-            printf("sbb %s, %x\n", ea, *(uint8_t *)&p[a + 3]);
+            printf("sbb %s, %x\n", ea, *(uint8_t *)&p[a + 2 + ds]);
           }
           break;
 
         default:
-          printf("Unpatched case of SBB (0x%02x)\n", LSB4);
+          il = 3 + ds;
+          print4b(p, a, il, ip);
+
+          if (mod == 0b11) {
+            printf("sbb %s, %x\n", REG16[rm], *(uint8_t *)&p[a + 2]);
+          } else {
+            printf("sbb byte %s, %x\n", ea, *(uint8_t *)&p[a + 2 + ds]);
+          }
           break;
         }
         break;
@@ -716,6 +937,31 @@ void f0x8(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
         }
         break;
 
+      case 0b110:
+        // XOR: imm -> r/m
+        mod = (p[a + 1] >> 6) & 0b11;
+        rm = p[a + 1] & 0b111;
+        get_adm(p, a + 2, mod, rm, ea, &ds);
+
+        il = 3 + w + ds;
+        print4b(p, a, il, ip);
+
+        if (w) {
+          if (mod == 0b11) {
+            printf("xor %s, %04x\n", REG16[rm], *(uint16_t *)&p[a + 2]);
+          } else {
+            printf("xor %s, %04x\n", ea, *(uint16_t *)&p[a + 2 + ds]);
+          }
+        } else {
+          if (mod == 0b11) {
+            printf("xor %s, %02x\n", REG8[rm], *(uint8_t *)&p[a + 2]);
+          } else {
+            printf("xor %s, %02x\n", ea, *(uint8_t *)&p[a + 2]);
+          }
+        }
+
+        break;
+
       case 0b111:
         // CMP: imm + r/m
         mod = (p[a + 1] >> 6) & 0b11;
@@ -729,7 +975,7 @@ void f0x8(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
           print4b(p, a, il, ip);
 
           if (mod == 0b11) {
-            printf("cmp byte %s, %x\n", REG16[rm], *(uint8_t *)&p[a + 2]);
+            printf("cmp %s, %x\n", REG8[rm], *(uint8_t *)&p[a + 2]);
           } else {
             printf("cmp byte %s, %x\n", ea, *(uint8_t *)&p[a + 2 + ds]);
           }
@@ -766,7 +1012,10 @@ void f0x8(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
               printf("cmp %s, %x\n", REG16[rm], *(uint8_t *)&p[a + 2]);
             }
           } else {
-            printf("cmp %s, %x\n", ea, *(uint8_t *)&p[a + 2 + ds]);
+
+            int8_t imm8 = *(int8_t *)&p[a + 2 + ds];
+            printf("cmp %s, %s%x\n", mod == 0b11 ? REG16[rm] : ea,
+                   imm8 < 0 ? "-" : "", imm8 < 0 ? -imm8 : imm8);
           }
           break;
 
@@ -890,21 +1139,35 @@ void f0x8(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
       break;
 
     case 0b11:
+      mod = (p[a + 1] >> 6) & 0b11;
+      reg = (p[a + 1] >> 3) & 0b11;
+      rm = p[a + 1] & 0b111;
+      get_adm(p, a + 2, mod, rm, ea, &ds);
+
+      il = 2 + ds;
+      print4b(p, a, il, ip);
+
       p2 = LSB4 & 0b11;
-
       switch (p2) {
-      case 0b10:
-        // MOV: r/m -> sreg
-        printf("MOV: r/m -> sreg (0x%02x)\n", LSB4);
-        break;
-
       case 0b00:
         // MOV: sreg -> r/m
-        printf("MOV: sreg -> r/m (0x%02x)\n", LSB4);
+        if (mod == 0b11)
+          printf("mov %s, %s\n", REG16[rm], SEGREG[reg]);
+        else
+          printf("mov %s, %s\n", ea, SEGREG[reg]);
+        break;
+
+      case 0b10:
+        // MOV: r/m -> sreg
+        if (mod == 0b11)
+          printf("mov %s, %s\n", SEGREG[reg], REG16[rm]);
+        else
+          printf("mov %s, %s\n", SEGREG[reg], ea);
         break;
       }
       break;
     }
+    break;
   }
 
   free(ea);
@@ -921,20 +1184,48 @@ void f0x9(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
     print4b(p, a, il, ip);
     printf("xchg %s, %s\n", REG16[reg], REG16[0]);
   } else {
+    il = 1;
+    print4b(p, a, il, ip);
+
     p4 = LSB4 & 0b1111;
     switch (p4) {
     case 0x8:
       // CBW
-      il = 1;
-      print4b(p, a, il, ip);
       printf("cbw\n");
       break;
 
     case 0x9:
       // CWD
-      il = 1;
-      print4b(p, a, il, ip);
       printf("cwd\n");
+      break;
+
+    case 0xb:
+      // WAIT
+      printf("wait\n");
+      break;
+
+    case 0xc:
+      // PUSHF
+      printf("pushf\n");
+      break;
+
+    case 0xd:
+      // POPF
+      printf("popf\n");
+      break;
+
+    case 0xe:
+      // SAHF
+      printf("sahf\n");
+      break;
+
+    case 0xf:
+      // LAHF
+      printf("lahf\n");
+      break;
+
+    default:
+      printf("(undefined)\n");
       break;
     }
   }
@@ -945,15 +1236,74 @@ void f0x9(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
 void f0xa(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
   char *ea = malloc(EA_STRING_SIZE * sizeof(unsigned char));
 
-  // TEST: imm. & acc.
   w = LSB4 & 0b1;
-  il = 2 + w;
-  print4b(p, a, il, ip);
+  p3 = (LSB4 >> 1) & 0b111;
 
-  if (!w) {
-    printf("test al, %x\n", p[a + 1]);
-  } else {
-    printf("test ax, %x\n", *(uint16_t *)&p[a + 1]);
+  switch (p3) {
+  case 0b000:
+    // MOV: mem -> acc
+    il = 3;
+    print4b(p, a, il, ip);
+    printf("mov %s, [%04x]\n", w ? "ax" : "al", *(uint16_t *)&p[a + 1]);
+    break;
+
+  case 0b001:
+    // MOV: acc -> mem
+    il = 3;
+    print4b(p, a, il, ip);
+    printf("mov [%04x], %s\n", *(uint16_t *)&p[a + 1], w ? "ax" : "al");
+    break;
+
+  case 0b010:
+    // MOVS
+    il = 1;
+    print4b(p, a, il, ip);
+    printf("movs%c\n", w ? 'w' : 'b');
+    break;
+
+  case 0b011:
+    // CMPS
+    il = 1;
+    print4b(p, a, il, ip);
+    printf("cmps%c\n", w ? 'w' : 'b');
+    break;
+
+  case 0b100:
+    // TEST: imm & acc
+    il = 2 + w;
+    print4b(p, a, il, ip);
+
+    if (!w) {
+      printf("test al, %x\n", p[a + 1]);
+    } else {
+      printf("test ax, %x\n", *(uint16_t *)&p[a + 1]);
+    }
+    break;
+
+  case 0b101:
+    // STOS
+    il = 1;
+    print4b(p, a, il, ip);
+    printf("stos%c\n", w ? 'w' : 'b');
+    break;
+
+  case 0b110:
+    // LODS
+    il = 1;
+    print4b(p, a, il, ip);
+    printf("lods%c\n", w ? 'w' : 'b');
+    break;
+
+  case 0b111:
+    // SCAS
+    il = 1;
+    print4b(p, a, il, ip);
+    printf("scas%c\n", w ? 'w' : 'b');
+    break;
+
+  default:
+    printf("ERROR: unknown opcode (0x%02x)\n", LSB4);
+    break;
   }
 
   free(ea);
@@ -970,7 +1320,7 @@ void f0xb(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
   print4b(p, a, il, ip);
 
   if (!w) {
-    printf("mov %s, %02x\n", REG8[reg], p[a + 1]);
+    printf("mov %s, %x\n", REG8[reg], p[a + 1]);
   } else {
     printf("mov %s, %04x\n", REG16[reg], *(uint16_t *)&p[a + 1]);
   }
@@ -983,40 +1333,33 @@ void f0xc(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
 
   p3 = (LSB4 >> 1) & 0b111;
   if (p3 == 0b011) {
+    // MOV: imm -> r/m
     w = LSB4 & 0b1;
     mod = (p[a + 1] >> 6) & 0b11;
     reg = (p[a + 1] >> 3) & 0b111;
     rm = p[a + 1] & 0b111;
     get_adm(p, a + 2, mod, rm, ea, &ds);
 
-    switch (reg) {
-    case 0b000:
-      // MOV: imm. -> r/m
-      if (w) {
-        il = 4 + ds;
-        print4b(p, a, il, ip);
+    if (w) {
+      il = 4 + ds;
+      print4b(p, a, il, ip);
 
-        if (mod == 0b11) {
-          printf("mov %s, %04x\n", REG16[rm], *(uint16_t *)&p[a + 3]);
-        } else {
-          printf("mov %s, %04x\n", ea,
-                 *(uint16_t *)&p[a + 2 + ds]); // +3 weird
-        }
+      if (mod == 0b11) {
+        printf("mov %s, %04x\n", REG16[rm], *(uint16_t *)&p[a + 3]);
       } else {
-        il = 3 + ds;
-        print4b(p, a, il, ip);
-
-        if (mod == 0b11) {
-          printf("mov byte %s, %02x\n", REG8[rm], p[a + 2]); // byte weird
-        } else {
-          printf("mov byte %s, %02x\n", ea, p[a + 2]);
-        }
+        printf("mov %s, %04x\n", ea, *(uint16_t *)&p[a + 2 + ds]);
       }
+    } else {
+      il = 3 + ds;
+      print4b(p, a, il, ip);
 
-      break;
+      if (mod == 0b11) {
+        printf("mov byte %s, %x\n", REG8[rm], p[a + 2 + ds]);
+      } else {
+        printf("mov byte %s, %x\n", ea, p[a + 2 + ds]);
+      }
     }
   } else {
-
     p4 = LSB4 & 0b1111;
     switch (p4) {
     case 0x2:
@@ -1033,6 +1376,43 @@ void f0xc(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
       printf("ret\n");
       break;
 
+    case 0x4:
+      // LDS: ptr -> DS
+      mod = (p[a + 1] >> 6) & 0b11;
+      reg = (p[a + 1] >> 3) & 0b111;
+      rm = p[a + 1] & 0b111;
+      get_adm(p, a + 2, mod, rm, ea, &ds);
+
+      il = 2 + ds;
+      print4b(p, a, il, ip);
+      printf("lds %s, %s\n", REG16[reg], ea);
+      break;
+
+    case 0x5:
+      // LES: ptr -> ES
+      mod = (p[a + 1] >> 6) & 0b11;
+      reg = (p[a + 1] >> 3) & 0b111;
+      rm = p[a + 1] & 0b111;
+      get_adm(p, a + 2, mod, rm, ea, &ds);
+
+      il = 2 + ds;
+      print4b(p, a, il, ip);
+      printf("les %s, %s\n", REG16[reg], ea);
+      break;
+
+    case 0xa:
+      // RET: intersegment + immed -> SP
+      il = 3;
+      print4b(p, a, il, ip);
+      printf("ret %04x\n", *(uint16_t *)&p[a + 1]);
+      break;
+
+    case 0xb:
+      // RET: intersegement
+      print4b(p, a, 1, ip);
+      printf("ret (intersegment)\n");
+      break;
+
     case 0xd:
       // INT: spec/unspec
       b7 = LSB4 & 0b1;
@@ -1040,10 +1420,23 @@ void f0xc(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
       print4b(p, a, il, ip);
 
       if (!b7) {
-        printf("int (DEFAULT=3, to catch if found)\n");
+        // INT: unspec, type = 3
+        printf("int 3\n"); // not sure
       } else {
-        printf("int %02x\n", p[a + 1]);
+        printf("int %x\n", p[a + 1]);
       }
+      break;
+
+    case 0xe:
+      // INTO
+      print4b(p, a, 1, ip);
+      printf("into\n");
+      break;
+
+    case 0xf:
+      // IRET
+      print4b(p, a, 1, ip);
+      printf("iret\n");
       break;
     }
   }
@@ -1054,145 +1447,284 @@ void f0xc(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
 void f0xd(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
   char *ea = malloc(EA_STRING_SIZE * sizeof(unsigned char));
 
-  // might change to case per case
-  v = (LSB4 >> 1) & 0b1;
-  w = LSB4 & 0b1;
-  mod = (p[a + 1] >> 6) & 0b11;
-  reg = (p[a + 1] >> 3) & 0b111;
-  rm = p[a + 1] & 0b111;
-  get_adm(p, a + 2, mod, rm, ea, &ds);
+  b3 = (LSB4 >> 3) & 0b1;
+  if (b3) {
+    // ESC
+    mod = (p[a + 1] >> 6) & 0b11;
+    rm = p[a + 1] & 0b111;
+    get_adm(p, a + 2, mod, rm, ea, &ds);
 
-  switch (reg) { // patch v flag!!!
-  case 0b010:
-    // RCL
     il = 2 + ds;
     print4b(p, a, il, ip);
+    printf("esc %s\n", ea);
 
-    if (!v) {
-      if (!w) {
-        if (mod == 0b11)
-          printf("rcl %s, 1\n", REG8[rm]);
-        else
-          printf("rcl %s, 1\n", ea);
-      } else {
-        if (mod == 0b11)
-          printf("rcl %s, 1\n", REG16[rm]);
-        else
-          printf("rcl %s, 1\n", ea);
-      }
-    } else {
-      if (!w) {
-        if (mod == 0b11)
-          printf("rcl %s, cl\n", REG8[rm]);
-        else
-          printf("rcl %s, cl\n", ea);
-      } else {
-        if (mod == 0b11)
-          printf("rcl %s, cl\n", REG16[rm]);
-        else
-          printf("rcl %s, cl\n", ea);
-      }
+    free(ea);
+    return;
+  }
+
+  p4 = LSB4 & 0b1111;
+  switch (p4) {
+  case 0x4:
+    // AAM
+    if (p[a + 1] == 0x0a) {
+      print4b(p, a, 2, ip);
+      printf("aam\n");
     }
     break;
 
-  case 0b100:
-    // SHL/SAL
-    il = 2 + ds;
-    print4b(p, a, il, ip);
-
-    if (!v) {
-      if (!w) {
-        if (mod == 0b11)
-          printf("shl %s, 1\n", REG8[rm]);
-        else
-          printf("shl %s, 1\n", ea);
-      } else {
-        if (mod == 0b11)
-          printf("shl %s, 1\n", REG16[rm]);
-        else
-          printf("shl %s, 1\n", ea);
-      }
-    } else {
-      if (!w) {
-        if (mod == 0b11)
-          printf("shl %s, cl\n", REG8[rm]);
-        else
-          printf("shl %s, cl\n", ea);
-      } else {
-        if (mod == 0b11)
-          printf("shl %s, cl\n", REG16[rm]);
-        else
-          printf("shl %s, cl\n", ea);
-      }
+  case 0x5:
+    // AAD
+    if (p[a + 1] == 0x0a) {
+      print4b(p, a, 2, ip);
+      printf("aad\n");
     }
     break;
 
-  case 0b101: // patch v flag!!!
-    // SHR
-    il = 2 + ds;
-    print4b(p, a, il, ip);
-
-    if (!v) {
-      if (!w) {
-        if (mod == 0b11)
-          printf("shr %s, 1\n", REG8[rm]);
-        else
-          printf("shr %s, 1\n", ea);
-      } else {
-        if (mod == 0b11)
-          printf("shr %s, 1\n", REG16[rm]);
-        else
-          printf("shr %s, 1\n", ea);
-      }
-    } else {
-      if (!w) {
-        if (mod == 0b11)
-          printf("shr %s, cl\n", REG8[rm]);
-        else
-          printf("shr %s, cl\n", ea);
-      } else {
-        if (mod == 0b11)
-          printf("shr %s, cl\n", REG16[rm]);
-        else
-          printf("shr %s, cl\n", ea);
-      }
-    }
-    break;
-
-  case 0b111: // patch v flag!!!
-    // SAR
-    il = 2 + ds;
-    print4b(p, a, il, ip);
-
-    if (!v) {
-      if (!w) {
-        if (mod == 0b11)
-          printf("sar %s, 1\n", REG8[rm]);
-        else
-          printf("sar %s, 1\n", ea);
-      } else {
-        if (mod == 0b11)
-          printf("sar %s, 1\n", REG16[rm]);
-        else
-          printf("sar %s, 1\n", ea);
-      }
-    } else {
-      if (!w) {
-        if (mod == 0b11)
-          printf("sar %s, cl\n", REG8[rm]);
-        else
-          printf("sar %s, cl\n", ea);
-      } else {
-        if (mod == 0b11)
-          printf("sar %s, cl\n", REG16[rm]);
-        else
-          printf("sar %s, cl\n", ea);
-      }
-    }
+  case 0x7:
+    // XLAT
+    print4b(p, a, 1, ip);
+    printf("xlat\n");
     break;
 
   default:
-    printf("Unmatched case 0xd (0x%02x)\n", LSB4);
+    v = (LSB4 >> 1) & 0b1;
+    w = LSB4 & 0b1;
+    mod = (p[a + 1] >> 6) & 0b11;
+    reg = (p[a + 1] >> 3) & 0b111;
+    rm = p[a + 1] & 0b111;
+    get_adm(p, a + 2, mod, rm, ea, &ds);
+
+    switch (reg) {
+    case 0b000:
+      // ROL
+      il = 2 + ds;
+      print4b(p, a, il, ip);
+
+      if (!v) {
+        if (!w) {
+          if (mod == 0b11)
+            printf("rol %s, 1\n", REG8[rm]);
+          else
+            printf("rol %s, 1\n", ea);
+        } else {
+          if (mod == 0b11)
+            printf("rol %s, 1\n", REG16[rm]);
+          else
+            printf("rol %s, 1\n", ea);
+        }
+      } else {
+        if (!w) {
+          if (mod == 0b11)
+            printf("rol %s, cl\n", REG8[rm]);
+          else
+            printf("rol %s, cl\n", ea);
+        } else {
+          if (mod == 0b11)
+            printf("rol %s, cl\n", REG16[rm]);
+          else
+            printf("rol %s, cl\n", ea);
+        }
+      }
+      break;
+
+    case 0b001:
+      // ROR
+      il = 2 + ds;
+      print4b(p, a, il, ip);
+
+      if (!v) {
+        if (!w) {
+          if (mod == 0b11)
+            printf("ror %s, 1\n", REG8[rm]);
+          else
+            printf("ror %s, 1\n", ea);
+        } else {
+          if (mod == 0b11)
+            printf("ror %s, 1\n", REG16[rm]);
+          else
+            printf("ror %s, 1\n", ea);
+        }
+      } else {
+        if (!w) {
+          if (mod == 0b11)
+            printf("ror %s, cl\n", REG8[rm]);
+          else
+            printf("ror %s, cl\n", ea);
+        } else {
+          if (mod == 0b11)
+            printf("ror %s, cl\n", REG16[rm]);
+          else
+            printf("ror %s, cl\n", ea);
+        }
+      }
+      break;
+
+    case 0b010:
+      // RCL
+      il = 2 + ds;
+      print4b(p, a, il, ip);
+
+      if (!v) {
+        if (!w) {
+          if (mod == 0b11)
+            printf("rcl %s, 1\n", REG8[rm]);
+          else
+            printf("rcl %s, 1\n", ea);
+        } else {
+          if (mod == 0b11)
+            printf("rcl %s, 1\n", REG16[rm]);
+          else
+            printf("rcl %s, 1\n", ea);
+        }
+      } else {
+        if (!w) {
+          if (mod == 0b11)
+            printf("rcl %s, cl\n", REG8[rm]);
+          else
+            printf("rcl %s, cl\n", ea);
+        } else {
+          if (mod == 0b11)
+            printf("rcl %s, cl\n", REG16[rm]);
+          else
+            printf("rcl %s, cl\n", ea);
+        }
+      }
+      break;
+
+    case 0b011:
+      // RCR
+      il = 2 + ds;
+      print4b(p, a, il, ip);
+
+      if (!v) {
+        if (!w) {
+          if (mod == 0b11)
+            printf("rcr %s, 1\n", REG8[rm]);
+          else
+            printf("rcr %s, 1\n", ea);
+        } else {
+          if (mod == 0b11)
+            printf("rcr %s, 1\n", REG16[rm]);
+          else
+            printf("rcr %s, 1\n", ea);
+        }
+      } else {
+        if (!w) {
+          if (mod == 0b11)
+            printf("rcr %s, cl\n", REG8[rm]);
+          else
+            printf("rcr byte %s, cl\n", ea);
+        } else {
+          if (mod == 0b11)
+            printf("rcr %s, cl\n", REG16[rm]);
+          else
+            printf("rcr %s, cl\n", ea);
+        }
+      }
+      break;
+
+    case 0b100:
+      // SHL/SAL
+      il = 2 + ds;
+      print4b(p, a, il, ip);
+
+      if (!v) {
+        if (!w) {
+          if (mod == 0b11)
+            printf("shl %s, 1\n", REG8[rm]);
+          else
+            printf("shl %s, 1\n", ea);
+        } else {
+          if (mod == 0b11)
+            printf("shl %s, 1\n", REG16[rm]);
+          else
+            printf("shl %s, 1\n", ea);
+        }
+      } else {
+        if (!w) {
+          if (mod == 0b11)
+            printf("shl %s, cl\n", REG8[rm]);
+          else
+            printf("shl %s, cl\n", ea);
+        } else {
+          if (mod == 0b11)
+            printf("shl %s, cl\n", REG16[rm]);
+          else
+            printf("shl %s, cl\n", ea);
+        }
+      }
+      break;
+
+    case 0b101: // patch v flag!!!
+      // SHR
+      il = 2 + ds;
+      print4b(p, a, il, ip);
+
+      if (!v) {
+        if (!w) {
+          if (mod == 0b11)
+            printf("shr %s, 1\n", REG8[rm]);
+          else
+            printf("shr %s, 1\n", ea);
+        } else {
+          if (mod == 0b11)
+            printf("shr %s, 1\n", REG16[rm]);
+          else
+            printf("shr %s, 1\n", ea);
+        }
+      } else {
+        if (!w) {
+          if (mod == 0b11)
+            printf("shr %s, cl\n", REG8[rm]);
+          else
+            printf("shr %s, cl\n", ea);
+        } else {
+          if (mod == 0b11)
+            printf("shr %s, cl\n", REG16[rm]);
+          else
+            printf("shr %s, cl\n", ea);
+        }
+      }
+      break;
+
+    case 0b111: // patch v flag!!!
+      // SAR
+      il = 2 + ds;
+      print4b(p, a, il, ip);
+
+      if (!v) {
+        if (!w) {
+          if (mod == 0b11)
+            printf("sar %s, 1\n", REG8[rm]);
+          else
+            printf("sar %s, 1\n", ea);
+        } else {
+          if (mod == 0b11)
+            printf("sar %s, 1\n", REG16[rm]);
+          else
+            printf("sar %s, 1\n", ea);
+        }
+      } else {
+        if (!w) {
+          if (mod == 0b11)
+            printf("sar %s, cl\n", REG8[rm]);
+          else
+            printf("sar %s, cl\n", ea);
+        } else {
+          if (mod == 0b11)
+            printf("sar %s, cl\n", REG16[rm]);
+          else
+            printf("sar %s, cl\n", ea);
+        }
+      }
+      break;
+
+    default:
+      il = 1;
+      print4b(p, a, il, ip);
+      printf("(undefined)\n"); // d9
+      break;
+    }
     break;
   }
 
@@ -1209,7 +1741,15 @@ void f0xe(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
     w = LSB4 & 0b1;
     il = 2;
     print4b(p, a, il, ip);
-    printf("in %s, %02x\n", w ? "ax" : "al", p[a + 1]);
+    printf("in %s, %x\n", w ? "ax" : "al", p[a + 1]);
+    break;
+
+  case 0b011:
+    // OUT: fixed port
+    w = LSB4 & 0b1;
+    il = 2;
+    print4b(p, a, il, ip);
+    printf("out %s, %x\n", w ? "ax" : "al", p[a + 1]);
     break;
 
   case 0b110:
@@ -1220,14 +1760,43 @@ void f0xe(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
     printf("in %s, dx\n", w ? "ax" : "al");
     break;
 
+  case 0b111:
+    // OUT: variable port
+    w = LSB4 & 0b1;
+    il = 1;
+    print4b(p, a, il, ip);
+    printf("out %s, dx\n", w ? "ax" : "al");
+    break;
+
   default:
     p4 = LSB4 & 0b1111;
     switch (p4) {
+    case 0x0:
+      // LOOPNZ/LOOPNE
+      il = 2;
+      print4b(p, a, il, ip);
+      printf("loopnz %04lx\n", *ip + *(int8_t *)&p[a + 1]);
+      break;
+
+    case 0x1:
+      // LOOPZ/LOOPE
+      il = 2;
+      print4b(p, a, il, ip);
+      printf("loopz %04lx\n", *ip + *(int8_t *)&p[a + 1]);
+      break;
+
     case 0x2:
       // LOOP
       il = 2;
       print4b(p, a, il, ip);
       printf("loop %04lx\n", *ip + *(int8_t *)&p[a + 1]);
+      break;
+
+    case 0x3:
+      // JCXZ
+      il = 2;
+      print4b(p, a, il, ip);
+      printf("jcxz %04lx\n", *ip + *(int8_t *)&p[a + 1]);
       break;
 
     case 0x8:
@@ -1299,7 +1868,7 @@ void f0xf(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
       break;
 
     default:
-      printf("Unmatched case of 0xf and rep:: %02x\n", LSB4);
+      printf("Unmatched case of 0xf and rep: %02x\n", LSB4);
       break;
     }
 
@@ -1323,7 +1892,7 @@ void f0xf(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
         if (mod == 0b11)
           printf("test %s, %x\n", REG8[rm], p[a + 2]);
         else
-          printf("test byte %s, %x\n", ea, p[a + 3]); // to recheck byte
+          printf("test byte %s, %x\n", ea, p[a + 2 + ds]); // to recheck byte
       } else {
         if (mod == 0b11)
           printf("test %s, %04x\n", REG16[rm], *(uint16_t *)&p[a + 2]);
@@ -1386,6 +1955,24 @@ void f0xf(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
       }
       break;
 
+    case 0b101:
+      // IMUL
+      il = 2 + ds;
+      print4b(p, a, il, ip);
+
+      if (!w) {
+        if (mod == 0b11)
+          printf("imul %s\n", REG8[rm]);
+        else
+          printf("imul %s\n", ea);
+      } else {
+        if (mod == 0b11)
+          printf("imul %s\n", REG16[rm]);
+        else
+          printf("imul %s\n", ea);
+      }
+      break;
+
     case 0b110:
       // DIV
       il = 2 + ds;
@@ -1404,6 +1991,24 @@ void f0xf(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
       }
       break;
 
+    case 0b111:
+      // IDIV
+      il = 2 + ds;
+      print4b(p, a, il, ip);
+
+      if (!w) {
+        if (mod == 0b11)
+          printf("idiv %s\n", REG8[rm]);
+        else
+          printf("idiv %s\n", ea);
+      } else {
+        if (mod == 0b11)
+          printf("idiv %s\n", REG16[rm]);
+        else
+          printf("idiv %s\n", ea);
+      }
+      break;
+
     default:
       printf("Unmatched case of 0xf + 0b011 as p3: %02x\n", LSB4);
       break;
@@ -1413,24 +2018,57 @@ void f0xf(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
   default:
     p4 = LSB4 & 0b1111;
     switch (p4) {
+    case 0x0:
+      // LOCK
+      print4b(p, a, 1, ip);
+      printf("lock\n");
+      break;
+
     case 0x4:
       // HLT
-      il = 1;
-      print4b(p, a, il, ip);
+      print4b(p, a, 1, ip);
       printf("hlt\n");
+      break;
+
+    case 0x5:
+      // CMC
+      print4b(p, a, 1, ip);
+      printf("cmc\n");
+      break;
+
+    case 0x8:
+      // CLC
+      print4b(p, a, 1, ip);
+      printf("clc\n");
+      break;
+
+    case 0x9:
+      // STC
+      print4b(p, a, 1, ip);
+      printf("stc\n");
+      break;
+
+    case 0xa:
+      // CLI
+      print4b(p, a, 1, ip);
+      printf("cli\n");
+      break;
+
+    case 0xb:
+      // STI
+      print4b(p, a, 1, ip);
+      printf("sti\n");
       break;
 
     case 0xc:
       // CLD
-      il = 1;
-      print4b(p, a, il, ip);
+      print4b(p, a, 1, ip);
       printf("cld\n");
       break;
 
     case 0xd:
       // STD
-      il = 1;
-      print4b(p, a, il, ip);
+      print4b(p, a, 1, ip);
       printf("std\n");
       break;
 
@@ -1471,7 +2109,7 @@ void f0xf(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
         break;
 
       case 0b010:
-        // CALL: indseg
+        // CALL: indw|seg
         mod = (p[a + 1] >> 6) & 0b11;
         rm = p[a + 1] & 0b111;
         get_adm(p, a + 2, mod, rm, ea, &ds);
@@ -1482,11 +2120,26 @@ void f0xf(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
         if (mod == 0b11)
           printf("call %s\n", REG16[rm]);
         else
-          printf("call %s\n", ea); // not sure, to recheck
+          printf("call %s\n", ea);
+        break;
+
+      case 0b011:
+        // CALL: indirect intersegment
+        mod = (p[a + 1] >> 6) & 0b11;
+        rm = p[a + 1] & 0b111;
+        get_adm(p, a + 2, mod, rm, ea, &ds);
+
+        il = 2 + ds;
+        print4b(p, a, il, ip);
+
+        if (mod == 0b11)
+          printf("call %s\n", REG16[rm]);
+        else
+          printf("call %s\n", ea);
         break;
 
       case 0b100:
-        // JMP: indwnseg
+        // JMP: indw|seg
         mod = (p[a + 1] >> 6) & 0b11;
         rm = p[a + 1] & 0b111;
         get_adm(p, a + 2, mod, rm, ea, &ds);
@@ -1500,8 +2153,23 @@ void f0xf(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
           printf("jmp %s\n", ea); // not sure, to recheck
         break;
 
+      case 0b101:
+        // JMP: indirect intersegment
+        mod = (p[a + 1] >> 6) & 0b11;
+        rm = p[a + 1] & 0b111;
+        get_adm(p, a + 2, mod, rm, ea, &ds);
+
+        il = 2 + ds;
+        print4b(p, a, il, ip);
+
+        if (mod == 0b11)
+          printf("jmp %s\n", REG16[rm]);
+        else
+          printf("jmp %s\n", ea);
+        break;
+
       case 0b110:
-        // PUSH: reg
+        // PUSH: r/m
         mod = (p[a + 1] >> 6) & 0b11;
         rm = p[a + 1] & 0b111;
         get_adm(p, a + 2, mod, rm, ea, &ds);

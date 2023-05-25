@@ -10,7 +10,7 @@
 
 #define MAX_LENGTH 1000000
 
-char *captureCommandOutput(const char *command);
+char *get_cout(const char *command);
 void cmp_files(const char *filename, int verbose);
 void cmp_files_dir(const char *directory, int verbose);
 int main(int argc, char **argv);

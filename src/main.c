@@ -36,7 +36,7 @@ int main(int argc, char **argv) {
   } else {
     // Print the hexadecimal dump & the text area
     print_hexdump(buffer, buffer_size);
-    printb(program, program_size, BYTE_PER_LINE);
+    // printb(program, program_size, BYTE_PER_LINE);
     printf("Text-area size: 0x%08lx = %zu bytes\n", program_size, program_size);
   }
 
