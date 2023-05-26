@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "print_patterns.h"
 #include "prints.h"
 #include "translate.h"
 

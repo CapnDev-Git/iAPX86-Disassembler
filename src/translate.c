@@ -67,6 +67,8 @@ void get_adm(const unsigned char *p, size_t a, unsigned char mod,
 }
 
 void translate_bin(const unsigned char *p, size_t p_size) {
+  init_lookups();
+
   const char *SEGREG[4] = {"es", "cs", "ss", "ds"};
   unsigned char op;
   size_t a = 0, ip = 0, pip = ip;
@@ -108,6 +110,8 @@ void translate_bin(const unsigned char *p, size_t p_size) {
     if (pip == ip) {
       print4b(p, a, 1, &ip);
       printf("(undefined)\n");
+
+      // TODO: print signle here and everywhere in this file
     }
     a = pip = ip;
   }

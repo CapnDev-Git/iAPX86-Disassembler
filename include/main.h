@@ -8,6 +8,8 @@
 #include <string.h>
 
 #include "dump.h"
+#include "patterns.h"
+#include "print_patterns.h"
 #include "prints.h"
 #include "translate.h"
 
