@@ -215,15 +215,15 @@ void f0x7(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
 
   case 0x9:
     // JNS
-    // print_condjmps(p, a, "jns", ip);
-    print_single(p, a, "(undefined)", ip, 1);
+    print_condjmps(p, a, "jns", ip);
+    // print_single(p, a, "(undefined)", ip, 1);
 
     break;
 
   case 0xa:
     // JP/JPE
-    // print_condjmps(p, a, "jp", ip);
-    print_single(p, a, "(undefined)", ip, 1);
+    print_condjmps(p, a, "jp", ip);
+    // print_single(p, a, "(undefined)", ip, 1);
     break;
 
   case 0xb:
@@ -403,8 +403,8 @@ void f0x9(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
 
     case 0xb:
       // WAIT
-      // print_single(p, a, "wait", ip, 1);
-      print_single(p, a, "(undefined)", ip, 1);
+      print_single(p, a, "wait", ip, 1);
+      // print_single(p, a, "(undefined)", ip, 1);
       break;
 
     case 0xc:
@@ -578,9 +578,9 @@ void f0xc(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
 
     case 0xa: // TODO: clean this case
       // RET: intersegment + immed -> SP
-      // print4b(p, a, 3, ip);
-      // printf("ret %04x\n", *(uint16_t *)&p[a + 1]);
-      print_single(p, a, "(undefined)", ip, 1);
+      print4b(p, a, 3, ip);
+      printf("ret %04x\n", *(uint16_t *)&p[a + 1]);
+      // print_single(p, a, "(undefined)", ip, 1);
 
       break;
 
@@ -644,8 +644,8 @@ void f0xd(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
     switch ((p[a + 1] >> 3) & 0b111) {
     case 0b000:
       // ROL
-      // printvw(p, a, "rol", ip, LSB4);
-      print_single(p, a, "(undefined)", ip, 1);
+      printvw(p, a, "rol", ip, LSB4);
+      // print_single(p, a, "(undefined)", ip, 1);
 
       break;
 
@@ -863,8 +863,8 @@ void f0xf(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
     switch (LSB4 & 0b1111) {
     case 0x0:
       // LOCK
-      // print_single(p, a + 1, "lock", ip, 1);
-      print_single(p, a, "(undefined)", ip, 1);
+      print_single(p, a + 1, "lock", ip, 1);
+      // print_single(p, a, "(undefined)", ip, 1);
       break;
 
     case 0x4:
@@ -880,14 +880,14 @@ void f0xf(const unsigned char *p, size_t a, unsigned char LSB4, size_t *ip) {
 
     case 0x8:
       // CLC
-      // print_single(p, a, "clc", ip, 1);
-      print_single(p, a, "(undefined)", ip, 1);
+      print_single(p, a, "clc", ip, 1);
+      // print_single(p, a, "(undefined)", ip, 1);
       break;
 
     case 0x9:
       // STC
-      // print_single(p, a, "stc", ip, 1);
-      print_single(p, a, "(undefined)", ip, 1);
+      print_single(p, a, "stc", ip, 1);
+      // print_single(p, a, "(undefined)", ip, 1);
       break;
 
     case 0xa:
