@@ -143,7 +143,7 @@ Confer to [documentation](./doc/iAPX86.pdf) for more details on instructions & a
 - JLE/JNG
 - JB/JNAE
 - JBE/JNA
-- JP/JPE --
+- JP/JPE
 - JO
 - JS
 - JNE/JNZ
@@ -153,7 +153,7 @@ Confer to [documentation](./doc/iAPX86.pdf) for more details on instructions & a
 - JNBE/JA
 - JNP/JPO
 - JNO
-- JNS --
+- JNS
 - LOOP
 - LOOPZ/LOOPE
 - LOOPNZ/LOOPNE
@@ -172,9 +172,9 @@ Confer to [documentation](./doc/iAPX86.pdf) for more details on instructions & a
 - CLI
 - STI
 - HLT
-- WAIT --
-- ESC --
-- LOCK --
+- WAIT
+- ESC
+- LOCK
 
 ## How to use
 
