@@ -22,7 +22,7 @@
 
 ## Introduction
 
-**_Still work in progress. Not all instructions are supported yet._**
+**_All instructions matching the instructor's reference are now supported._**
 
 Code in C by FLECHTNER Eliott.
 
@@ -49,8 +49,6 @@ No external librairies are necessary except the following C headers:
 
 ## Supported instructions
 
-**_Instruction set estimated completion percentage: ~60% (73 / 120)_**
-
 Confer to [documentation](./doc/iAPX86.pdf) for more details on instructions & addressing modes.
 
 **Legend**
@@ -60,38 +58,54 @@ Confer to [documentation](./doc/iAPX86.pdf) for more details on instructions & a
 - <-> = either
 - \+ = with
 - & = and
-- r/m = Register/Memory
+- w| = within
+- indir = Indirect
+- addimm = Adding Immediate
+- r/m = Reg/Memory
 - reg = Register
 - acc = Accumulator
 - imm = Immediate
 - EA = Effective Address
-- w| = within
-- dir = Direct
-- indir = Indirect
-- addimm = Adding Immediate
+- (in)dir = (In)Direct
 - (un)spec = (Un)Specified
 
 ### DATA TRANSFER
 
-- MOV: r/m <-> reg, imm -> r/m, imm -> reg
-- PUSH: r/m, reg
-- POP: reg
+- MOV: r/m <-> reg, imm -> r/m, imm -> reg, mem -> acc, acc -> mem, r/m -> segreg, segreg -> r/m
+- PUSH: r/m, reg, segreg
+- POP: r/m, reg, segreg
 - XCHG: r/m + reg, reg + acc
 - IN: fixed/variable port
-- LEA: EA -> reg
+- OUT: fixed/variable port
+- XLAT
+- LEA
+- LDS
+- LES
+- LAHF
+- SAHF
+- PUSHF
+- POPF
 
 ### ARITHMETIC
 
-- ADD: r/m + reg <->, imm -> r/m
-- ADC: r/m + reg <->
+- ADD: r/m + reg <->, imm -> r/m, imm -> acc
+- ADC: r/m + reg <->, imm -> r/m, imm -> acc
 - INC: r/m, reg
+- AAA
+- BAA
 - SUB: r/m & reg <->, imm <- r/m, imm <- acc
-- SSB: r/m & reg <->, imm <- r/m
+- SSB: r/m & reg <->, imm <- r/m, imm <- acc
 - DEC: r/m, reg
 - NEG
 - CMP: r/m & reg, imm + r/m, imm + acc
+- AAS
+- DAS
 - MUL
+- IMUL
+- AAM
 - DIV
+- IDIV
+- AAD
 - CBW
 - CWD
 
@@ -101,11 +115,14 @@ Confer to [documentation](./doc/iAPX86.pdf) for more details on instructions & a
 - SHL/SAL
 - SHR
 - SAR
+- ROL
+- ROR
 - RCL
-- AND: r/m & reg <->, imm -> r/m
+- RCR
+- AND: r/m & reg <->, imm -> r/m, imm -> acc
 - TEST: r/m & reg, imm & r/m, imm & acc
-- OR: r/m & reg <->, imm -> r/m
-- XOR: r/m & reg <->
+- OR: r/m & reg <->, imm -> r/m, imm -> acc
+- XOR: r/m & reg <->, imm -> r/m, imm -> acc
 
 ### STRING MANIPULATION
 
@@ -118,27 +135,46 @@ Confer to [documentation](./doc/iAPX86.pdf) for more details on instructions & a
 
 ### CONTROL TRANSFER
 
-- CALL: dirw|seg, indirw|seg
-- JMP: dirw|seg, dirw|seg-short, indirw|seg
-- RET: w|seg, w|seg addimm -> SP
+- CALL: dirw|seg, indirw|seg, indir-interseg
+- JMP: dirw|seg, dirw|seg-short, indirw|seg, indir-interseg
+- RET: w|seg, w|seg addimm -> SP, interseg, interseg addimm -> SP
 - JE/JZ
 - JL/JNGE
 - JLE/JNG
 - JB/JNAE
 - JBE/JNA
+- JP/JPE --
+- JO
+- JS
 - JNE/JNZ
 - JNL/JGE
 - JNLE/JG
 - JNB/JAE
 - JNBE/JA
+- JNP/JPO
+- JNO
+- JNS --
 - LOOP
+- LOOPZ/LOOPE
+- LOOPNZ/LOOPNE
+- JCXZ
 - INT: spec, 3
+- INTO
+- IRET
 
 ### PROCESSOR CONTROL
 
+- CLC
+- CMC
+- STC
 - CLD
 - STD
+- CLI
+- STI
 - HLT
+- WAIT --
+- ESC --
+- LOCK --
 
 ## How to use
 
@@ -148,6 +184,7 @@ To compile the project, you need to run the following command:
 
 ```bash
 make # Creates the "disassembler" executable & test/utest executable
+make disassembler # Creates the "disassembler" executable only
 ```
 
 ### Execution
@@ -186,7 +223,7 @@ The `-v` or `--verbose` flag can be used to print the details of the missmatches
 #### Unit tests example
 
 ```bash
-./test/utest --verbose ./test/execs/2c_a.out # For testing a single file with verbose
+./test/utest --verbose ./test/execs/2c # For testing a single file with verbose
 ./test/utest -v ./test/execs # For testing the entire directory with verbose
 ```
 
