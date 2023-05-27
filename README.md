@@ -22,7 +22,7 @@
 
 ## Introduction
 
-**_All instructions matching the instructor's reference are now supported._**
+**_All instructions are now supported._**
 
 Code in C by FLECHTNER Eliott.
 
