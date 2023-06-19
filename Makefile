@@ -11,7 +11,7 @@ INCDIR = include
 TESTDIR = test
 
 # Libraries
-LIBS = -lm
+LIBS =
 
 # Dependencies
 _DEPS = translate.h prints.h dump.h patterns.h
